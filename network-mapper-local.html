@@ -1,0 +1,1352 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Network mapper</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Arabic:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#e6e9ed; --panel:#f6f7f9; --node:#ffffff; --soft:#dde2e8;
+  --ink:#141c25; --muted:#586471; --line:#c3cad2; --link:#7b8793;
+  --mx:#0b8a6a; --sw:#2455c3; --ap:#c0560f; --cam:#8a3fb5; --prt:#b3365f; --scn:#5f7f12; --oth:#5d6b78;
+  --focus:#2455c3; --danger:#b3261e; --dangerbg:#b3261e;
+  --sans:"IBM Plex Sans","IBM Plex Sans Arabic",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  color-scheme:light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0e1318; --panel:#161c23; --node:#1d252e; --soft:#242d37;
+    --ink:#e5eaef; --muted:#8e9ba8; --line:#2f3a45; --link:#6b7885;
+    --mx:#36c9a1; --sw:#7aa3ff; --ap:#f29a52; --cam:#c58cf0; --prt:#f07a9f; --scn:#a9cf55; --oth:#9aa7b4;
+    --focus:#7aa3ff; --danger:#ff8f86; --dangerbg:#b3261e;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0e1318; --panel:#161c23; --node:#1d252e; --soft:#242d37;
+  --ink:#e5eaef; --muted:#8e9ba8; --line:#2f3a45; --link:#6b7885;
+  --mx:#36c9a1; --sw:#7aa3ff; --ap:#f29a52; --cam:#c58cf0; --prt:#f07a9f; --scn:#a9cf55; --oth:#9aa7b4;
+  --focus:#7aa3ff; --danger:#ff8f86; --dangerbg:#b3261e;
+  color-scheme:dark;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font:400 14px/1.45 var(--sans)}
+*,*::before,*::after{box-sizing:inherit}
+h1,h2,h3,p{margin:0}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+
+.app{display:grid;grid-template-columns:272px minmax(0,1fr) 332px;height:100%}
+.side,.edit{background:var(--panel);overflow:auto;min-height:0}
+.side{border-inline-end:1px solid var(--line);padding:18px 16px;display:flex;flex-direction:column;gap:22px}
+.edit{border-inline-start:1px solid var(--line);padding:18px 16px}
+.main{display:flex;flex-direction:column;min-width:0;min-height:0}
+
+.brand h1{font:600 18px/1.2 var(--sans)}
+.brand p{color:var(--muted);margin-top:4px;font-size:13px}
+.side h2{font:600 13px/1.2 var(--sans);margin-bottom:10px}
+.list{display:flex;flex-direction:column;gap:2px;margin-bottom:10px}
+.muted{color:var(--muted);font-size:13px}
+
+.btn{font:500 13px var(--sans);padding:7px 11px;border:1px solid var(--line);background:var(--node);color:var(--ink);border-radius:6px;cursor:pointer;white-space:nowrap}
+.btn:hover{border-color:var(--muted)}
+.btn.primary{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.btn.danger{color:var(--danger);border-color:var(--danger);background:transparent}
+.btn.confirm{background:var(--dangerbg);color:#fff;border-color:var(--dangerbg)}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+.adds{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin-bottom:12px}
+.adds .btn{padding:7px 6px;text-align:center}
+.adds i{display:inline-block;width:8px;height:8px;border-radius:2px;background:var(--c);margin-inline-end:6px}
+
+.net,.dev{display:flex;justify-content:space-between;align-items:baseline;gap:8px;width:100%;text-align:start;padding:7px 9px;border:1px solid transparent;border-radius:6px;background:transparent;color:var(--ink);font:500 13px var(--sans);cursor:pointer}
+.net:hover,.dev:hover{background:var(--soft)}
+.net.on,.dev.on{background:var(--soft);border-color:var(--line)}
+.dev{border-inline-start:4px solid var(--c)}
+.net .ct,.dev .ip{font:400 11.5px var(--mono);color:var(--muted);white-space:nowrap}
+.net .nm,.dev .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.newnet{display:flex;gap:6px;margin-bottom:10px}
+.newnet input{flex:1;min-width:0}
+
+input,select,textarea{font:400 13px var(--sans);color:var(--ink);background:var(--node);border:1px solid var(--line);border-radius:6px;padding:7px 9px;width:100%}
+input.mono{font-family:var(--mono);font-size:12.5px;direction:ltr;text-align:left}
+textarea{resize:vertical}
+
+.bar{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;padding:10px 14px;border-bottom:1px solid var(--line);background:var(--panel)}
+.bar .title{flex:1 1 220px;min-width:160px;font:600 17px var(--sans);border-color:transparent;background:transparent;padding:5px 8px}
+.bar .title:hover{border-color:var(--line)}
+.bar .isp{flex:0 1 210px}
+.grp{display:flex;align-items:center;gap:6px}
+.zl{font:400 12px var(--mono);color:var(--muted);min-width:38px;text-align:center}
+.langrow{flex:1 0 100%;display:flex;justify-content:flex-end;align-items:center;gap:8px;font-size:12.5px;color:var(--muted)}
+.langrow select{width:auto;padding:5px 8px}
+.status{flex:1 0 100%;font-size:12px;color:var(--muted);min-height:17px}
+
+.canvas{flex:1;min-height:0;overflow:auto;background-color:var(--bg);background-image:radial-gradient(var(--line) 1px,transparent 1px);background-size:22px 22px}
+.canvas{direction:ltr}
+.canvas svg{display:block;margin:0 auto}
+.node{outline:none}
+.node:focus-visible{outline:2px solid var(--focus);outline-offset:3px}
+
+.dh{display:flex;gap:10px;align-items:center;margin-bottom:14px}
+.dh i{width:10px;align-self:stretch;border-radius:3px;background:var(--c)}
+.dh h2{font:600 16px/1.25 var(--sans);word-break:break-word}
+.dh p{color:var(--muted);font-size:12.5px}
+.f{display:grid;gap:4px;font-size:12px;color:var(--muted);margin-bottom:10px;min-width:0}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}
+.edit h3{font:600 13px var(--sans);margin:16px 0 10px;padding-top:14px;border-top:1px solid var(--line)}
+.empty h2{font:600 16px var(--sans);margin-bottom:6px}
+.empty p{color:var(--muted)}
+.delnote{font-size:12px;color:var(--muted);margin-top:6px}
+
+.btn:disabled{opacity:.45;cursor:default}
+.btn:disabled:hover{border-color:var(--line)}
+input[type=checkbox]{width:auto;padding:0;margin:0;accent-color:var(--ink)}
+.chk{display:flex;align-items:center;gap:8px;font-size:13px;margin:0 0 10px;padding-top:18px}
+.g3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.srow{border:1px solid var(--line);border-radius:8px;background:var(--node);padding:8px;margin-bottom:6px}
+.stop{display:flex;gap:6px;margin-bottom:6px}
+.srow input,.srow select{padding:5px 6px;font-size:12px}
+.portmeta{margin-bottom:8px}
+.pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(34px,1fr));gap:4px;direction:ltr}
+.pt{position:relative;height:38px;padding:0;border:1px solid var(--line);border-top:4px solid var(--c);border-radius:5px;background:var(--node);color:var(--ink);font:500 11px var(--mono);cursor:pointer}
+.pt b{font-weight:500}
+.pt.used{background:var(--soft)}
+.pt.up{box-shadow:inset 0 -3px 0 var(--ink)}
+.pt.on{outline:2px solid var(--ink);outline-offset:1px}
+.pt i{position:absolute;right:3px;bottom:4px;width:6px;height:6px;border-radius:50%;background:var(--ap)}
+.pedit{margin-top:12px;padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--node)}
+.pedit h4{margin:0 0 6px;font:600 13px var(--sans)}
+.pedit p{margin:0 0 8px;font-size:12.5px}
+.pedit .chk{padding-top:0}
+.vrow{border:1px solid var(--line);border-radius:8px;background:var(--node);padding:8px;margin-bottom:6px}
+.vtop{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.vtop .vid{font:600 13px var(--sans);flex:1}
+.vtop .vid small{font:400 11.5px var(--sans);color:var(--muted);margin-inline-start:4px}
+.vc{width:28px;height:28px;padding:2px;border:1px solid var(--line);border-radius:6px;background:var(--node);cursor:pointer}
+.vx{padding:3px 8px;font-size:12px}
+.vrow .g2{margin:0}
+.vrow input{padding:5px 7px;font-size:12.5px}
+.vform{display:grid;grid-template-columns:64px 1fr;gap:6px;margin-top:8px}
+.vform .r2{grid-column:1/-1;display:flex;gap:6px}
+.vform .r2 input{flex:1;min-width:0}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;padding:8px 14px;border-bottom:1px solid var(--line);background:var(--panel);font-size:12.5px}
+.legend[hidden]{display:none}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:16px;height:4px;border-radius:2px;background:var(--c)}
+.legend small{color:var(--muted);font:400 11.5px var(--mono)}
+dialog{border:1px solid var(--line);border-radius:10px;background:var(--panel);color:var(--ink);max-width:560px;width:calc(100% - 32px);padding:18px}
+dialog::backdrop{background:rgba(0,0,0,.45)}
+dialog h2{font:600 16px var(--sans);margin-bottom:6px}
+dialog p{color:var(--muted);margin-bottom:10px}
+dialog textarea{font:400 12px var(--mono);margin-bottom:10px}
+code{font:400 12.5px var(--mono)}
+
+@media (max-width:900px){
+  html,body{height:auto;min-height:100%}
+  .app{display:flex;flex-direction:column;height:auto;min-height:100%}
+  .main{order:1;height:64vh;min-height:380px}
+  .edit{order:2;border-inline-start:0;border-top:1px solid var(--line)}
+  .side{order:3;border-inline-end:0;border-top:1px solid var(--line)}
+}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="side" aria-label="Networks and devices" data-i18n-aria="aria.side">
+    <header class="brand">
+      <h1>Network mapper</h1>
+      <p data-i18n="brand.tag">Add your gear, then save the network as a file.</p>
+    </header>
+
+    <section>
+      <h2 data-i18n="sec.networks">Networks</h2>
+      <div id="nets" class="list"></div>
+      <form id="newForm" class="newnet" autocomplete="off">
+        <input id="newName" dir="auto" placeholder="New network name" aria-label="New network name" data-i18n-ph="net.newPh" data-i18n-aria="net.newPh" maxlength="80">
+        <button class="btn primary" type="submit" data-i18n="net.create">Create</button>
+      </form>
+      <div class="row">
+        <button class="btn" type="button" data-act="import" data-i18n="net.open">Open file</button>
+        <button class="btn danger" type="button" id="delNet" data-act="del-net">Delete network</button>
+      </div>
+      <input type="file" id="file" accept=".json,application/json" hidden>
+    </section>
+
+    <section>
+      <h2 data-i18n="sec.devices">Devices</h2>
+      <div class="adds">
+        <button class="btn" type="button" data-act="add" data-type="mx" style="--c:var(--mx)"><i></i>MX</button>
+        <button class="btn" type="button" data-act="add" data-type="switch" style="--c:var(--sw)"><i></i>Switch</button>
+        <button class="btn" type="button" data-act="add" data-type="ap" style="--c:var(--ap)"><i></i>AP</button>
+        <button class="btn" type="button" data-act="add" data-type="camera" style="--c:var(--cam)"><i></i>Camera</button>
+        <button class="btn" type="button" data-act="add" data-type="printer" style="--c:var(--prt)"><i></i>Printer</button>
+        <button class="btn" type="button" data-act="add" data-type="scanner" style="--c:var(--scn)"><i></i>Scanner</button>
+        <button class="btn" type="button" data-act="add" data-type="other" style="--c:var(--oth)"><i></i>Other</button>
+      </div>
+      <div id="devs" class="list"></div>
+    </section>
+
+    <section>
+      <h2 data-i18n="sec.vlans">VLANs</h2>
+      <div id="vlans"></div>
+      <form id="vlanForm" class="vform" autocomplete="off">
+        <input id="vId" placeholder="ID" inputmode="numeric" maxlength="4" aria-label="VLAN ID" data-i18n-ph="vlan.idPh" data-i18n-aria="vlan.aria.id">
+        <input id="vName" dir="auto" placeholder="Name, e.g. Staff" maxlength="40" aria-label="VLAN name" data-i18n-ph="vlan.namePh" data-i18n-aria="vlan.aria.name">
+        <div class="r2">
+          <input id="vSub" class="mono" placeholder="10.0.10.0/24" maxlength="43" aria-label="VLAN subnet" data-i18n-aria="vlan.aria.subnet">
+          <button class="btn primary" type="submit" data-i18n="vlan.add">Add VLAN</button>
+        </div>
+      </form>
+    </section>
+  </aside>
+
+  <main class="main">
+    <div class="bar">
+      <div class="langrow">
+        <label for="lang" data-i18n="lang.label">Language</label>
+        <select id="lang">
+          <option value="en" lang="en">English</option>
+          <option value="fr" lang="fr">Français</option>
+          <option value="ar" lang="ar">العربية</option>
+          <option value="es" lang="es">Español</option>
+        </select>
+      </div>
+      <input id="netName" class="title" dir="auto" aria-label="Network name" data-i18n-aria="bar.netName" maxlength="80">
+      <input id="isp" class="isp" dir="auto" aria-label="Internet provider" placeholder="Internet provider (optional)" data-i18n-aria="bar.isp" data-i18n-ph="bar.isp" maxlength="60">
+      <div class="grp">
+        <button class="btn" type="button" id="undoBtn" data-act="undo" title="Undo (Ctrl+Z)" data-i18n="bar.undo" data-i18n-title="bar.undoTip" disabled>Undo</button>
+        <button class="btn" type="button" id="redoBtn" data-act="redo" title="Redo (Ctrl+Shift+Z)" data-i18n="bar.redo" data-i18n-title="bar.redoTip" disabled>Redo</button>
+        <button class="btn" type="button" data-act="auto" title="Clear manual positions and re-run the layout" data-i18n="bar.auto" data-i18n-title="bar.autoTip">Auto-arrange</button>
+        <button class="btn" type="button" data-act="zoom-out" aria-label="Zoom out" data-i18n-aria="bar.zoomOut">&minus;</button>
+        <span id="zoomLbl" class="zl">100%</span>
+        <button class="btn" type="button" data-act="zoom-in" aria-label="Zoom in" data-i18n-aria="bar.zoomIn">+</button>
+        <button class="btn" type="button" data-act="fit" data-i18n="bar.fit">Fit</button>
+      </div>
+      <div class="grp">
+        <button class="btn" type="button" data-act="export-png" data-i18n="bar.exportPng">Export PNG</button>
+        <button class="btn" type="button" data-act="export-svg" data-i18n="bar.exportSvg">Export SVG</button>
+        <button class="btn primary" type="button" data-act="save-file" data-i18n="bar.saveFile">Save file</button>
+      </div>
+      <p id="status" class="status" role="status"></p>
+    </div>
+    <div class="legend" id="legend" hidden></div>
+    <div class="canvas" id="canvas">
+      <svg id="dia" xmlns="http://www.w3.org/2000/svg" role="group" aria-label="Network diagram" data-i18n-aria="aria.diagram"><g id="g"></g></svg>
+    </div>
+  </main>
+
+  <aside class="edit" id="edit" aria-label="Device details" data-i18n-aria="edit.title"></aside>
+</div>
+
+<dialog id="fb">
+  <form method="dialog">
+    <h2 data-i18n="fb.title">Copy your network file</h2>
+    <p id="fbMsg"></p>
+    <textarea id="fbText" readonly rows="10"></textarea>
+    <div class="row">
+      <button class="btn" type="button" id="fbCopy" data-i18n="fb.copy">Copy text</button>
+      <button class="btn primary" value="close" data-i18n="fb.close">Close</button>
+    </div>
+  </form>
+</dialog>
+
+<script>
+(function(){
+"use strict";
+
+/* ---------- language ---------- */
+var LKEY="network-mapper:lang";
+var LANGS=["en","fr","ar","es"];
+var I18N={
+en:{
+"app.title":"Network mapper","brand.tag":"Add your gear, then save the network as a file.","lang.label":"Language",
+"sec.networks":"Networks","net.newPh":"New network name","net.create":"Create","net.open":"Open file","net.delete":"Delete network","net.deleteConfirm":"Click again to delete","net.new":"New network",
+"sec.devices":"Devices","sec.vlans":"VLANs","dev.none":"No devices yet. Add one above.","unnamed":"Unnamed","untitled":"Untitled",
+"count.one":"{n} device","count.other":"{n} devices",
+"type.mx":"MX security appliance","type.switch":"Switch","type.ap":"Access point","type.camera":"Camera","type.printer":"Printer","type.scanner":"Scanner","type.other":"Other device",
+"short.mx":"MX","short.switch":"Switch","short.ap":"AP","short.camera":"Camera","short.printer":"Printer","short.scanner":"Scanner","short.other":"Other",
+"f.wan":"WAN IP","f.subnet":"LAN subnet","f.ports":"Port count","f.role":"Role","f.ssids":"SSIDs","f.radio":"Channels and band","f.nvr":"NVR or recorder","f.res":"Resolution","f.queue":"Hostname or queue","f.kind":"Kind","f.hostname":"Hostname or share","f.hostnameOnly":"Hostname","f.desc":"Description",
+"ph.role":"Core, access, PoE","ph.ssids":"Staff, Guest","ph.radio":"5 GHz, ch 36","ph.res":"4 MP","ph.kindPrinter":"Color laser MFP","ph.kindScanner":"Document, flatbed",
+"f.type":"Device type","f.name":"Name","ph.name":"e.g. SW-Core","f.model":"Model","ph.model":"e.g. MS225-48FP","f.serial":"Serial number","f.ip":"IP address","f.mac":"MAC address","f.vlanMgmt":"Management VLAN","f.vlan":"VLAN","f.location":"Location","ph.location":"Comms room",
+"sec.connection":"Connection","f.uplink":"Uplinks to","uplink.internet":"Internet","f.parentPort":"Port on upstream device","f.ownPort":"Port on this device","ph.port":"Port 12",
+"sec.notes":"Notes","ph.notes":"Firmware, install date, anything worth remembering","sec.remove":"Remove","dev.delete":"Delete device","dev.deleteConfirm":"Click again to delete this device","dev.deleteNote":"Devices connected below it move up to its uplink.",
+"edit.title":"Device details","edit.empty":"Select a device in the diagram or the list to edit it, or add a new one from the Devices section.",
+"vlan.none":"None","vlan.noneAdd":"None (add VLANs in the sidebar)","vlan.undef":"(not defined)","vlan.empty":"No VLANs yet. Add one below, then assign it to devices.",
+"vlan.idPh":"ID","vlan.namePh":"Name, e.g. Staff","vlan.nameShort":"Name","vlan.subnetShort":"Subnet","vlan.add":"Add VLAN","vlan.del":"Delete","vlan.delConfirm":"Click again",
+"vlan.aria.id":"VLAN ID","vlan.aria.name":"VLAN name","vlan.aria.subnet":"VLAN subnet","vlan.aria.color":"Color for VLAN {id}","vlan.aria.nameOf":"Name of VLAN {id}","vlan.aria.subnetOf":"Subnet of VLAN {id}","vlan.aria.delete":"Delete VLAN {id}",
+"bar.netName":"Network name","bar.isp":"Internet provider (optional)","bar.auto":"Auto-arrange","bar.autoTip":"Clear manual positions and re-run the layout","bar.zoomOut":"Zoom out","bar.zoomIn":"Zoom in","bar.fit":"Fit","bar.exportSvg":"Export SVG","bar.saveFile":"Save file",
+"aria.diagram":"Network diagram","aria.side":"Networks and devices",
+"dia.internet":"Internet","dia.hint":"Add an MX, switch or access point to start the diagram.",
+"st.default":"Drag devices to reposition them. Changes are saved in this browser as you go.",
+"st.autosaved":"Auto-saved in this browser at {time}. Use Save file to keep a copy.",
+"st.saveFail":"Changes can’t be kept in this browser. Use Save file so you don’t lose your work.",
+"st.fileSaved":"Network file saved.","st.svgSaved":"Diagram exported as SVG.","st.downloads":"Check your Downloads folder.","st.cancelled":"Save cancelled.","st.rate":"Another save prompt is open. Finish it, then try again.",
+"st.badJson":"That file isn’t valid JSON.","err.notNetwork":"This file doesn’t look like a network file.","st.tooLarge":"That file is too large to be a network file.","st.readFail":"Couldn’t read that file.",
+"st.opened":"Opened “{name}” with {count}.","st.created":"Created “{name}”. Add your first device from the Devices section.","st.deletedNet":"Deleted “{name}”.",
+"st.vlanBadId":"A VLAN ID is a number from 1 to 4094.","st.vlanExists":"VLAN {id} already exists.","st.vlanAdded":"Added VLAN {id}. Assign it from a device’s VLAN field.","st.vlanDeleted":"Deleted VLAN {id}. Devices that used it keep the number and show it as not defined.",
+"fb.title":"Copy your network file","fb.text":"This view can’t save files directly. Copy the text below into a file named {name}.","fb.copy":"Copy text","fb.close":"Close",
+"bar.undo":"Undo","bar.redo":"Redo","bar.undoTip":"Undo (Ctrl+Z)","bar.redoTip":"Redo (Ctrl+Shift+Z)","st.undone":"Change undone.","st.redone":"Change redone.","bar.exportPng":"Export PNG","st.pngSaved":"Diagram exported as PNG.","st.pngFail":"Couldn’t create the PNG. Try Export SVG instead.","opt.unset":"Not set","f.linkSpeed":"Link speed","f.linkMedia":"Link type","media.copper":"Copper","media.fiber":"Fiber","media.wireless":"Wireless","f.lag":"Aggregated link (LAG)","f.lagCount":"Links in bundle","f.link":"Link","sec.ports":"Port map","port.noCount":"Set a port count above to see the ports.","port.used":"{used} of {n} ports in use","port.pick":"Select a port to edit it.","port.title":"Port {n}","f.portName":"Description or connected device","ph.portName":"e.g. AP-Lobby","f.portMode":"Mode","mode.access":"Access","mode.trunk":"Trunk","f.nativeVlan":"Native VLAN","f.allowed":"Allowed VLANs","ph.allowed":"10, 20, 30","f.poe":"Powered over PoE","port.linked":"Linked in diagram: {name}","port.isUplink":"This port is the uplink.","port.clear":"Clear port","sec.wireless":"Wireless networks","ssid.add":"Add SSID","ssid.namePh":"SSID name","ssid.aria.vlan":"VLAN for this SSID","ssid.aria.band":"Band","ssid.aria.sec":"Security","ssid.remove":"Remove","ssid.removeAria":"Remove SSID {n}","band.all":"All bands","sec.unset":"Security","sec.open":"Open","ssid.none":"No wireless networks yet. Add an SSID and map it to a VLAN.","f.wifi":"Wi-Fi standard"
+},
+fr:{
+"app.title":"Cartographe réseau","brand.tag":"Ajoutez vos équipements, puis enregistrez le réseau dans un fichier.","lang.label":"Langue",
+"sec.networks":"Réseaux","net.newPh":"Nom du nouveau réseau","net.create":"Créer","net.open":"Ouvrir un fichier","net.delete":"Supprimer le réseau","net.deleteConfirm":"Cliquez à nouveau pour supprimer","net.new":"Nouveau réseau",
+"sec.devices":"Équipements","sec.vlans":"VLAN","dev.none":"Aucun équipement pour l’instant. Ajoutez-en un ci-dessus.","unnamed":"Sans nom","untitled":"Sans titre",
+"count.one":"{n} équipement","count.other":"{n} équipements",
+"type.mx":"Appliance de sécurité MX","type.switch":"Commutateur","type.ap":"Point d’accès","type.camera":"Caméra","type.printer":"Imprimante","type.scanner":"Scanner","type.other":"Autre équipement",
+"short.mx":"MX","short.switch":"Switch","short.ap":"Borne","short.camera":"Caméra","short.printer":"Imprimante","short.scanner":"Scanner","short.other":"Autre",
+"f.wan":"IP WAN","f.subnet":"Sous-réseau LAN","f.ports":"Nombre de ports","f.role":"Rôle","f.ssids":"SSID","f.radio":"Canaux et bande","f.nvr":"NVR ou enregistreur","f.res":"Résolution","f.queue":"Nom d’hôte ou file d’impression","f.kind":"Type","f.hostname":"Nom d’hôte ou partage","f.hostnameOnly":"Nom d’hôte","f.desc":"Description",
+"ph.role":"Cœur, accès, PoE","ph.ssids":"Employés, Invités","ph.radio":"5 GHz, can. 36","ph.res":"4 MP","ph.kindPrinter":"Multifonction laser couleur","ph.kindScanner":"Documents, à plat",
+"f.type":"Type d’équipement","f.name":"Nom","ph.name":"ex. SW-Core","f.model":"Modèle","ph.model":"ex. MS225-48FP","f.serial":"Numéro de série","f.ip":"Adresse IP","f.mac":"Adresse MAC","f.vlanMgmt":"VLAN de gestion","f.vlan":"VLAN","f.location":"Emplacement","ph.location":"Local technique",
+"sec.connection":"Connexion","f.uplink":"Relié à","uplink.internet":"Internet","f.parentPort":"Port sur l’équipement amont","f.ownPort":"Port sur cet équipement","ph.port":"Port 12",
+"sec.notes":"Notes","ph.notes":"Firmware, date d’installation, tout ce qui mérite d’être noté","sec.remove":"Supprimer","dev.delete":"Supprimer l’équipement","dev.deleteConfirm":"Cliquez à nouveau pour supprimer cet équipement","dev.deleteNote":"Les équipements raccordés en dessous remontent vers son lien amont.",
+"edit.title":"Détails de l’équipement","edit.empty":"Sélectionnez un équipement dans le schéma ou la liste pour le modifier, ou ajoutez-en un depuis la section Équipements.",
+"vlan.none":"Aucun","vlan.noneAdd":"Aucun (ajoutez des VLAN dans la barre latérale)","vlan.undef":"(non défini)","vlan.empty":"Aucun VLAN pour l’instant. Ajoutez-en un ci-dessous, puis affectez-le aux équipements.",
+"vlan.idPh":"ID","vlan.namePh":"Nom, ex. Employés","vlan.nameShort":"Nom","vlan.subnetShort":"Sous-réseau","vlan.add":"Ajouter un VLAN","vlan.del":"Supprimer","vlan.delConfirm":"Cliquer encore",
+"vlan.aria.id":"ID du VLAN","vlan.aria.name":"Nom du VLAN","vlan.aria.subnet":"Sous-réseau du VLAN","vlan.aria.color":"Couleur du VLAN {id}","vlan.aria.nameOf":"Nom du VLAN {id}","vlan.aria.subnetOf":"Sous-réseau du VLAN {id}","vlan.aria.delete":"Supprimer le VLAN {id}",
+"bar.netName":"Nom du réseau","bar.isp":"Fournisseur d’accès (facultatif)","bar.auto":"Réorganiser","bar.autoTip":"Efface les positions manuelles et relance la disposition","bar.zoomOut":"Zoom arrière","bar.zoomIn":"Zoom avant","bar.fit":"Ajuster","bar.exportSvg":"Exporter en SVG","bar.saveFile":"Enregistrer le fichier",
+"aria.diagram":"Schéma réseau","aria.side":"Réseaux et équipements",
+"dia.internet":"Internet","dia.hint":"Ajoutez un MX, un switch ou un point d’accès pour commencer le schéma.",
+"st.default":"Faites glisser les équipements pour les repositionner. Les modifications sont enregistrées dans ce navigateur au fur et à mesure.",
+"st.autosaved":"Enregistré automatiquement dans ce navigateur à {time}. Utilisez « Enregistrer le fichier » pour en garder une copie.",
+"st.saveFail":"Les modifications ne peuvent pas être conservées dans ce navigateur. Utilisez « Enregistrer le fichier » pour ne rien perdre.",
+"st.fileSaved":"Fichier réseau enregistré.","st.svgSaved":"Schéma exporté en SVG.","st.downloads":"Vérifiez votre dossier Téléchargements.","st.cancelled":"Enregistrement annulé.","st.rate":"Une autre fenêtre d’enregistrement est ouverte. Terminez-la, puis réessayez.",
+"st.badJson":"Ce fichier n’est pas un JSON valide.","err.notNetwork":"Ce fichier ne ressemble pas à un fichier réseau.","st.tooLarge":"Ce fichier est trop volumineux pour être un fichier réseau.","st.readFail":"Impossible de lire ce fichier.",
+"st.opened":"Réseau « {name} » ouvert : {count}.","st.created":"Réseau « {name} » créé. Ajoutez votre premier équipement depuis la section Équipements.","st.deletedNet":"Réseau « {name} » supprimé.",
+"st.vlanBadId":"Un ID de VLAN est un nombre de 1 à 4094.","st.vlanExists":"Le VLAN {id} existe déjà.","st.vlanAdded":"VLAN {id} ajouté. Affectez-le depuis le champ VLAN d’un équipement.","st.vlanDeleted":"VLAN {id} supprimé. Les équipements qui l’utilisaient gardent le numéro et l’affichent comme non défini.",
+"fb.title":"Copiez votre fichier réseau","fb.text":"Cette vue ne peut pas enregistrer de fichiers directement. Copiez le texte ci-dessous dans un fichier nommé {name}.","fb.copy":"Copier le texte","fb.close":"Fermer",
+"bar.undo":"Annuler","bar.redo":"Rétablir","bar.undoTip":"Annuler (Ctrl+Z)","bar.redoTip":"Rétablir (Ctrl+Maj+Z)","st.undone":"Modification annulée.","st.redone":"Modification rétablie.","bar.exportPng":"Exporter en PNG","st.pngSaved":"Schéma exporté en PNG.","st.pngFail":"Impossible de créer le PNG. Essayez plutôt l’export SVG.","opt.unset":"Non défini","f.linkSpeed":"Débit du lien","f.linkMedia":"Type de lien","media.copper":"Cuivre","media.fiber":"Fibre","media.wireless":"Sans fil","f.lag":"Lien agrégé (LAG)","f.lagCount":"Liens dans l’agrégat","f.link":"Lien","sec.ports":"Plan des ports","port.noCount":"Indiquez un nombre de ports ci-dessus pour afficher les ports.","port.used":"{used} ports utilisés sur {n}","port.pick":"Sélectionnez un port pour le modifier.","port.title":"Port {n}","f.portName":"Description ou équipement raccordé","ph.portName":"ex. AP-Lobby","f.portMode":"Mode","mode.access":"Accès","mode.trunk":"Trunk","f.nativeVlan":"VLAN natif","f.allowed":"VLAN autorisés","ph.allowed":"10, 20, 30","f.poe":"Alimenté en PoE","port.linked":"Lié dans le schéma : {name}","port.isUplink":"Ce port est le lien amont.","port.clear":"Réinitialiser le port","sec.wireless":"Réseaux sans fil","ssid.add":"Ajouter un SSID","ssid.namePh":"Nom du SSID","ssid.aria.vlan":"VLAN de ce SSID","ssid.aria.band":"Bande","ssid.aria.sec":"Sécurité","ssid.remove":"Retirer","ssid.removeAria":"Retirer le SSID {n}","band.all":"Toutes les bandes","sec.unset":"Sécurité","sec.open":"Ouvert","ssid.none":"Aucun réseau sans fil pour l’instant. Ajoutez un SSID et associez-le à un VLAN.","f.wifi":"Norme Wi-Fi"
+},
+es:{
+"app.title":"Mapa de red","brand.tag":"Añade tus equipos y guarda la red en un archivo.","lang.label":"Idioma",
+"sec.networks":"Redes","net.newPh":"Nombre de la nueva red","net.create":"Crear","net.open":"Abrir archivo","net.delete":"Eliminar red","net.deleteConfirm":"Haz clic otra vez para eliminar","net.new":"Nueva red",
+"sec.devices":"Dispositivos","sec.vlans":"VLAN","dev.none":"Aún no hay dispositivos. Añade uno arriba.","unnamed":"Sin nombre","untitled":"Sin título",
+"count.one":"{n} dispositivo","count.other":"{n} dispositivos",
+"type.mx":"Dispositivo de seguridad MX","type.switch":"Conmutador","type.ap":"Punto de acceso","type.camera":"Cámara","type.printer":"Impresora","type.scanner":"Escáner","type.other":"Otro dispositivo",
+"short.mx":"MX","short.switch":"Switch","short.ap":"AP","short.camera":"Cámara","short.printer":"Impresora","short.scanner":"Escáner","short.other":"Otro",
+"f.wan":"IP WAN","f.subnet":"Subred LAN","f.ports":"Número de puertos","f.role":"Función","f.ssids":"SSID","f.radio":"Canales y banda","f.nvr":"NVR o grabador","f.res":"Resolución","f.queue":"Nombre de host o cola","f.kind":"Tipo","f.hostname":"Nombre de host o recurso compartido","f.hostnameOnly":"Nombre de host","f.desc":"Descripción",
+"ph.role":"Núcleo, acceso, PoE","ph.ssids":"Personal, Invitados","ph.radio":"5 GHz, can. 36","ph.res":"4 MP","ph.kindPrinter":"Multifunción láser color","ph.kindScanner":"Documentos, plano",
+"f.type":"Tipo de dispositivo","f.name":"Nombre","ph.name":"p. ej. SW-Core","f.model":"Modelo","ph.model":"p. ej. MS225-48FP","f.serial":"Número de serie","f.ip":"Dirección IP","f.mac":"Dirección MAC","f.vlanMgmt":"VLAN de administración","f.vlan":"VLAN","f.location":"Ubicación","ph.location":"Sala de comunicaciones",
+"sec.connection":"Conexión","f.uplink":"Conectado a","uplink.internet":"Internet","f.parentPort":"Puerto en el dispositivo superior","f.ownPort":"Puerto en este dispositivo","ph.port":"Puerto 12",
+"sec.notes":"Notas","ph.notes":"Firmware, fecha de instalación, cualquier dato útil","sec.remove":"Eliminar","dev.delete":"Eliminar dispositivo","dev.deleteConfirm":"Haz clic otra vez para eliminar este dispositivo","dev.deleteNote":"Los dispositivos conectados debajo pasan a su enlace superior.",
+"edit.title":"Detalles del dispositivo","edit.empty":"Selecciona un dispositivo en el diagrama o en la lista para editarlo, o añade uno nuevo en la sección Dispositivos.",
+"vlan.none":"Ninguna","vlan.noneAdd":"Ninguna (añade VLAN en la barra lateral)","vlan.undef":"(no definida)","vlan.empty":"Aún no hay VLAN. Añade una abajo y asígnala a los dispositivos.",
+"vlan.idPh":"ID","vlan.namePh":"Nombre, p. ej. Personal","vlan.nameShort":"Nombre","vlan.subnetShort":"Subred","vlan.add":"Añadir VLAN","vlan.del":"Eliminar","vlan.delConfirm":"Clic otra vez",
+"vlan.aria.id":"ID de VLAN","vlan.aria.name":"Nombre de la VLAN","vlan.aria.subnet":"Subred de la VLAN","vlan.aria.color":"Color de la VLAN {id}","vlan.aria.nameOf":"Nombre de la VLAN {id}","vlan.aria.subnetOf":"Subred de la VLAN {id}","vlan.aria.delete":"Eliminar la VLAN {id}",
+"bar.netName":"Nombre de la red","bar.isp":"Proveedor de Internet (opcional)","bar.auto":"Autoorganizar","bar.autoTip":"Borra las posiciones manuales y recalcula la disposición","bar.zoomOut":"Alejar","bar.zoomIn":"Acercar","bar.fit":"Ajustar","bar.exportSvg":"Exportar SVG","bar.saveFile":"Guardar archivo",
+"aria.diagram":"Diagrama de red","aria.side":"Redes y dispositivos",
+"dia.internet":"Internet","dia.hint":"Añade un MX, un switch o un punto de acceso para empezar el diagrama.",
+"st.default":"Arrastra los dispositivos para reubicarlos. Los cambios se guardan en este navegador automáticamente.",
+"st.autosaved":"Guardado automáticamente en este navegador a las {time}. Usa «Guardar archivo» para conservar una copia.",
+"st.saveFail":"Los cambios no se pueden conservar en este navegador. Usa «Guardar archivo» para no perder tu trabajo.",
+"st.fileSaved":"Archivo de red guardado.","st.svgSaved":"Diagrama exportado como SVG.","st.downloads":"Revisa tu carpeta de Descargas.","st.cancelled":"Guardado cancelado.","st.rate":"Hay otro aviso de guardado abierto. Termínalo y vuelve a intentarlo.",
+"st.badJson":"Ese archivo no es un JSON válido.","err.notNetwork":"Este archivo no parece un archivo de red.","st.tooLarge":"Ese archivo es demasiado grande para ser un archivo de red.","st.readFail":"No se pudo leer ese archivo.",
+"st.opened":"Se abrió «{name}» con {count}.","st.created":"Se creó «{name}». Añade tu primer dispositivo desde la sección Dispositivos.","st.deletedNet":"Se eliminó «{name}».",
+"st.vlanBadId":"Un ID de VLAN es un número del 1 al 4094.","st.vlanExists":"La VLAN {id} ya existe.","st.vlanAdded":"Se añadió la VLAN {id}. Asígnala desde el campo VLAN de un dispositivo.","st.vlanDeleted":"Se eliminó la VLAN {id}. Los dispositivos que la usaban conservan el número y la muestran como no definida.",
+"fb.title":"Copia tu archivo de red","fb.text":"Esta vista no puede guardar archivos directamente. Copia el texto de abajo en un archivo llamado {name}.","fb.copy":"Copiar texto","fb.close":"Cerrar",
+"bar.undo":"Deshacer","bar.redo":"Rehacer","bar.undoTip":"Deshacer (Ctrl+Z)","bar.redoTip":"Rehacer (Ctrl+Mayús+Z)","st.undone":"Cambio deshecho.","st.redone":"Cambio rehecho.","bar.exportPng":"Exportar PNG","st.pngSaved":"Diagrama exportado como PNG.","st.pngFail":"No se pudo crear el PNG. Prueba a exportar como SVG.","opt.unset":"Sin definir","f.linkSpeed":"Velocidad del enlace","f.linkMedia":"Tipo de enlace","media.copper":"Cobre","media.fiber":"Fibra","media.wireless":"Inalámbrico","f.lag":"Enlace agregado (LAG)","f.lagCount":"Enlaces en el grupo","f.link":"Enlace","sec.ports":"Mapa de puertos","port.noCount":"Indica un número de puertos arriba para ver los puertos.","port.used":"{used} de {n} puertos en uso","port.pick":"Selecciona un puerto para editarlo.","port.title":"Puerto {n}","f.portName":"Descripción o dispositivo conectado","ph.portName":"p. ej. AP-Lobby","f.portMode":"Modo","mode.access":"Acceso","mode.trunk":"Troncal","f.nativeVlan":"VLAN nativa","f.allowed":"VLAN permitidas","ph.allowed":"10, 20, 30","f.poe":"Alimentado por PoE","port.linked":"Enlazado en el diagrama: {name}","port.isUplink":"Este puerto es el enlace superior.","port.clear":"Borrar puerto","sec.wireless":"Redes inalámbricas","ssid.add":"Añadir SSID","ssid.namePh":"Nombre del SSID","ssid.aria.vlan":"VLAN de este SSID","ssid.aria.band":"Banda","ssid.aria.sec":"Seguridad","ssid.remove":"Quitar","ssid.removeAria":"Quitar el SSID {n}","band.all":"Todas las bandas","sec.unset":"Seguridad","sec.open":"Abierta","ssid.none":"Aún no hay redes inalámbricas. Añade un SSID y asígnalo a una VLAN.","f.wifi":"Estándar Wi-Fi"
+},
+ar:{
+"app.title":"مخطط الشبكة","brand.tag":"أضف أجهزتك ثم احفظ الشبكة في ملف.","lang.label":"اللغة",
+"sec.networks":"الشبكات","net.newPh":"اسم الشبكة الجديدة","net.create":"إنشاء","net.open":"فتح ملف","net.delete":"حذف الشبكة","net.deleteConfirm":"انقر مرة أخرى للحذف","net.new":"شبكة جديدة",
+"sec.devices":"الأجهزة","sec.vlans":"VLAN","dev.none":"لا توجد أجهزة بعد. أضف جهازًا من الأعلى.","unnamed":"بدون اسم","untitled":"بدون عنوان",
+"count.zero":"لا أجهزة","count.one":"جهاز واحد","count.two":"جهازان","count.few":"{n} أجهزة","count.many":"{n} جهازًا","count.other":"{n} جهاز",
+"type.mx":"جهاز أمان MX","type.switch":"سويتش","type.ap":"نقطة وصول","type.camera":"كاميرا","type.printer":"طابعة","type.scanner":"ماسح ضوئي","type.other":"جهاز آخر",
+"short.mx":"MX","short.switch":"سويتش","short.ap":"نقطة وصول","short.camera":"كاميرا","short.printer":"طابعة","short.scanner":"ماسح ضوئي","short.other":"أخرى",
+"f.wan":"عنوان IP لشبكة WAN","f.subnet":"الشبكة الفرعية LAN","f.ports":"عدد المنافذ","f.role":"الدور","f.ssids":"أسماء الشبكات (SSID)","f.radio":"القنوات والنطاق","f.nvr":"مسجّل NVR","f.res":"الدقة","f.queue":"اسم المضيف أو قائمة الطباعة","f.kind":"النوع","f.hostname":"اسم المضيف أو المشاركة","f.hostnameOnly":"اسم المضيف","f.desc":"الوصف",
+"ph.role":"نواة، وصول، PoE","ph.ssids":"الموظفون، الضيوف","ph.radio":"5 GHz، قناة 36","ph.res":"4 ميغابكسل","ph.kindPrinter":"طابعة ليزر ملونة متعددة الوظائف","ph.kindScanner":"مستندات، مسطح",
+"f.type":"نوع الجهاز","f.name":"الاسم","ph.name":"مثال: SW-Core","f.model":"الطراز","ph.model":"مثال: MS225-48FP","f.serial":"الرقم التسلسلي","f.ip":"عنوان IP","f.mac":"عنوان MAC","f.vlanMgmt":"شبكة VLAN للإدارة","f.vlan":"VLAN","f.location":"الموقع","ph.location":"غرفة الاتصالات",
+"sec.connection":"الاتصال","f.uplink":"متصل بـ","uplink.internet":"الإنترنت","f.parentPort":"المنفذ على الجهاز العلوي","f.ownPort":"المنفذ على هذا الجهاز","ph.port":"المنفذ 12",
+"sec.notes":"ملاحظات","ph.notes":"البرنامج الثابت، تاريخ التركيب، أي شيء يستحق التذكر","sec.remove":"إزالة","dev.delete":"حذف الجهاز","dev.deleteConfirm":"انقر مرة أخرى لحذف هذا الجهاز","dev.deleteNote":"تنتقل الأجهزة المتصلة أسفله إلى وصلته العلوية.",
+"edit.title":"تفاصيل الجهاز","edit.empty":"اختر جهازًا من المخطط أو القائمة لتعديله، أو أضف جهازًا جديدًا من قسم الأجهزة.",
+"vlan.none":"بدون","vlan.noneAdd":"بدون (أضف شبكات VLAN من الشريط الجانبي)","vlan.undef":"(غير معرّف)","vlan.empty":"لا توجد شبكات VLAN بعد. أضف واحدة أدناه ثم عيّنها للأجهزة.",
+"vlan.idPh":"المعرّف","vlan.namePh":"الاسم، مثال: الموظفون","vlan.nameShort":"الاسم","vlan.subnetShort":"الشبكة الفرعية","vlan.add":"إضافة VLAN","vlan.del":"حذف","vlan.delConfirm":"انقر مجددًا",
+"vlan.aria.id":"معرّف VLAN","vlan.aria.name":"اسم VLAN","vlan.aria.subnet":"الشبكة الفرعية لـ VLAN","vlan.aria.color":"لون VLAN {id}","vlan.aria.nameOf":"اسم VLAN {id}","vlan.aria.subnetOf":"الشبكة الفرعية لـ VLAN {id}","vlan.aria.delete":"حذف VLAN {id}",
+"bar.netName":"اسم الشبكة","bar.isp":"مزوّد الإنترنت (اختياري)","bar.auto":"ترتيب تلقائي","bar.autoTip":"يمسح المواضع اليدوية ويعيد حساب التخطيط","bar.zoomOut":"تصغير","bar.zoomIn":"تكبير","bar.fit":"ملاءمة","bar.exportSvg":"تصدير SVG","bar.saveFile":"حفظ الملف",
+"aria.diagram":"مخطط الشبكة","aria.side":"الشبكات والأجهزة",
+"dia.internet":"الإنترنت","dia.hint":"أضف جهاز MX أو سويتش أو نقطة وصول لبدء المخطط.",
+"st.default":"اسحب الأجهزة لتغيير مواضعها. تُحفظ التغييرات في هذا المتصفح تلقائيًا.",
+"st.autosaved":"حُفظ تلقائيًا في هذا المتصفح الساعة {time}. استخدم «حفظ الملف» للاحتفاظ بنسخة.",
+"st.saveFail":"تعذّر حفظ التغييرات في هذا المتصفح. استخدم «حفظ الملف» حتى لا تفقد عملك.",
+"st.fileSaved":"تم حفظ ملف الشبكة.","st.svgSaved":"تم تصدير المخطط بصيغة SVG.","st.downloads":"تحقق من مجلد التنزيلات.","st.cancelled":"أُلغي الحفظ.","st.rate":"هناك نافذة حفظ أخرى مفتوحة. أنهِها ثم أعد المحاولة.",
+"st.badJson":"هذا الملف ليس JSON صالحًا.","err.notNetwork":"لا يبدو هذا الملف ملف شبكة.","st.tooLarge":"هذا الملف كبير جدًا ليكون ملف شبكة.","st.readFail":"تعذّرت قراءة هذا الملف.",
+"st.opened":"تم فتح «{name}» وفيه {count}.","st.created":"تم إنشاء «{name}». أضف أول جهاز من قسم الأجهزة.","st.deletedNet":"تم حذف «{name}».",
+"st.vlanBadId":"معرّف VLAN هو رقم من 1 إلى 4094.","st.vlanExists":"شبكة VLAN {id} موجودة بالفعل.","st.vlanAdded":"تمت إضافة VLAN {id}. عيّنها من حقل VLAN في أي جهاز.","st.vlanDeleted":"تم حذف VLAN {id}. تحتفظ الأجهزة التي كانت تستخدمها بالرقم وتعرضه كغير معرّف.",
+"fb.title":"انسخ ملف الشبكة","fb.text":"لا يمكن لهذا العرض حفظ الملفات مباشرة. انسخ النص أدناه إلى ملف باسم {name}.","fb.copy":"نسخ النص","fb.close":"إغلاق",
+"bar.undo":"تراجع","bar.redo":"إعادة","bar.undoTip":"تراجع (Ctrl+Z)","bar.redoTip":"إعادة (Ctrl+Shift+Z)","st.undone":"تم التراجع عن التغيير.","st.redone":"تمت إعادة التغيير.","bar.exportPng":"تصدير PNG","st.pngSaved":"تم تصدير المخطط بصيغة PNG.","st.pngFail":"تعذّر إنشاء ملف PNG. جرّب تصدير SVG بدلًا من ذلك.","opt.unset":"غير محدد","f.linkSpeed":"سرعة الوصلة","f.linkMedia":"نوع الوصلة","media.copper":"نحاس","media.fiber":"ألياف ضوئية","media.wireless":"لاسلكي","f.lag":"وصلة مجمّعة (LAG)","f.lagCount":"عدد الوصلات في المجموعة","f.link":"الوصلة","sec.ports":"خريطة المنافذ","port.noCount":"حدّد عدد المنافذ أعلاه لعرض المنافذ.","port.used":"{used} من {n} منفذًا قيد الاستخدام","port.pick":"اختر منفذًا لتعديله.","port.title":"المنفذ {n}","f.portName":"الوصف أو الجهاز المتصل","ph.portName":"مثال: AP-Lobby","f.portMode":"الوضع","mode.access":"وصول","mode.trunk":"ترنك","f.nativeVlan":"شبكة VLAN الأصلية","f.allowed":"شبكات VLAN المسموحة","ph.allowed":"10, 20, 30","f.poe":"مزوّد بالطاقة عبر PoE","port.linked":"مرتبط في المخطط: {name}","port.isUplink":"هذا المنفذ هو الوصلة العلوية.","port.clear":"مسح المنفذ","sec.wireless":"الشبكات اللاسلكية","ssid.add":"إضافة SSID","ssid.namePh":"اسم SSID","ssid.aria.vlan":"شبكة VLAN لهذا SSID","ssid.aria.band":"النطاق","ssid.aria.sec":"الأمان","ssid.remove":"إزالة","ssid.removeAria":"إزالة SSID رقم {n}","band.all":"كل النطاقات","sec.unset":"الأمان","sec.open":"مفتوحة","ssid.none":"لا توجد شبكات لاسلكية بعد. أضف SSID واربطه بشبكة VLAN.","f.wifi":"معيار Wi-Fi"
+}
+};
+var lang=(function(){
+  try{var s=localStorage.getItem(LKEY);if(LANGS.indexOf(s)>=0)return s}catch(e){}
+  var n=String(navigator.language||"en").slice(0,2).toLowerCase();
+  return LANGS.indexOf(n)>=0?n:"en";
+})();
+function tr(key,vars){
+  var s=I18N[lang][key];
+  if(s==null)s=I18N.en[key];
+  if(s==null)return key;
+  return vars?s.replace(/\{(\w+)\}/g,function(m,k){return vars[k]!=null?vars[k]:m}):s;
+}
+function plural(key,n){
+  var f="other";
+  try{f=new Intl.PluralRules(lang).select(n)}catch(e){}
+  var s=I18N[lang][key+"."+f];
+  if(s==null)s=I18N[lang][key+".other"];
+  if(s==null)s=I18N.en[key+"."+(f==="one"?"one":"other")];
+  return s.replace("{n}",n);
+}
+
+/* ---------- constants ---------- */
+var W=176,H=84,IH=56,GX=28,GY=88,PAD=64,ROOT="__internet__";
+var KEY="network-mapper:v1";
+var TYPES={
+  mx:{label:"MX security appliance",short:"MX",prefix:"MX",v:"--mx",
+      icon:'<path d="M12 2.5 20 6v6c0 4.6-3.3 8.2-8 9.5C7.3 20.2 4 16.6 4 12V6z"/><path d="M8.5 11h7M8.5 14.5h7"/>'},
+  switch:{label:"Switch",short:"Switch",prefix:"SW",v:"--sw",
+      icon:'<rect x="2.5" y="7" width="19" height="10" rx="2"/><path d="M6.5 12h.01M10.2 12h.01M13.8 12h.01M17.5 12h.01" stroke-width="2.8"/>'},
+  ap:{label:"Access point",short:"AP",prefix:"AP",v:"--ap",
+      icon:'<circle cx="12" cy="15.5" r="1.6"/><path d="M7.8 11.6a6 6 0 0 1 8.4 0M4.9 8.6a10 10 0 0 1 14.2 0"/><path d="M8 20.5h8"/>'},
+  camera:{label:"Camera",short:"Camera",prefix:"CAM",v:"--cam",
+      icon:'<rect x="2.5" y="7" width="13" height="10" rx="2"/><path d="M15.5 11.2 21.5 8v8l-6-3.2z"/>'},
+  printer:{label:"Printer",short:"Printer",prefix:"PRN",v:"--prt",
+      icon:'<path d="M7 9V3.5h10V9"/><rect x="3" y="9" width="18" height="8" rx="2"/><path d="M7 14h10v6.5H7z"/>'},
+  scanner:{label:"Scanner",short:"Scanner",prefix:"SCN",v:"--scn",
+      icon:'<rect x="3" y="13" width="18" height="6.5" rx="2"/><path d="M5 13l3-6.5h8L19 13"/><path d="M7 16.3h.01" stroke-width="2.6"/>'},
+  other:{label:"Other device",short:"Other",prefix:"DEV",v:"--oth",
+      icon:'<rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8.5 12h7M12 8.5v7"/>'}
+};
+var ENDPOINTS={camera:1,printer:1,scanner:1,other:1};
+var TYPE_FIELDS={
+  mx:[["wan","f.wan","=203.0.113.10",true],["subnet","f.subnet","=10.0.0.0/16",true]],
+  switch:[["ports","f.ports","=24",false],["role","f.role","ph.role",false]],
+  ap:[],
+  camera:[["nvr","f.nvr","=NVR-01",false],["res","f.res","ph.res",false]],
+  printer:[["queue","f.queue","=PRN-FLOOR2",true],["kind","f.kind","ph.kindPrinter",false]],
+  scanner:[["hostname","f.hostname","=SCAN-RECORDS",true],["kind","f.kind","ph.kindScanner",false]],
+  other:[["hostname","f.hostnameOnly","",true],["kind","f.desc","",false]]
+};
+var KEYS=["name","model","serial","mac","ip","vlan","location","notes","uplinkPort","parentPort","wan","subnet","ports","role","ssids","radio","nvr","res","queue","kind","hostname","linkSpeed","linkMedia","lagCount","wifi"];
+var PALETTE=["#2b7de9","#e0742b","#1f9d6b","#a24bd1","#d6457a","#8a8f1d","#18a0b8","#c9372c"];
+var SPEEDS=["10M","100M","1G","2.5G","5G","10G","25G","40G","100G"];
+var MEDIA=["copper","fiber","wireless"];
+var SEC=["open","wpa2","wpa3","ent"],BANDS=["2.4","5","6"],WIFI=["4","5","6","6E","7"];
+Object.keys(TYPES).forEach(function(k){
+  Object.defineProperty(TYPES[k],"label",{get:function(){return tr("type."+k)}});
+  Object.defineProperty(TYPES[k],"short",{get:function(){return tr("short."+k)}});
+});
+
+/* ---------- helpers ---------- */
+var $=function(s){return document.querySelector(s)};
+var esc=function(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})};
+var clamp=function(v,a,b){return Math.max(a,Math.min(b,v))};
+var trunc=function(s,n){s=String(s||"");return s.length>n?s.slice(0,n-1)+"…":s};
+var slug=function(s){return (String(s||"network").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"")||"network")};
+var isMobile=function(){return window.matchMedia("(max-width: 900px)").matches};
+function uid(){return "d"+Math.random().toString(36).slice(2,9)+Date.now().toString(36).slice(-3)}
+
+function blank(type,props){
+  var d={id:uid(),type:type,uplinkId:"",linkLag:false,ssidList:[],portMap:{}};
+  KEYS.forEach(function(k){d[k]=""});
+  return Object.assign(d,props||{});
+}
+
+/* ---------- data ---------- */
+function sample(){
+  var mx=blank("mx",{name:"MX-Edge",model:"MX68",serial:"Q2AA-0000-0001",ip:"10.0.0.1",mac:"e0:55:3d:00:00:01",vlan:"1",location:"Comms room",wan:"203.0.113.10",subnet:"10.0.0.0/16",uplinkPort:"WAN 1",linkSpeed:"1G",linkMedia:"fiber"});
+  var core=blank("switch",{name:"SW-Core",model:"MS225-48FP",serial:"Q2BB-0000-0002",ip:"10.0.0.2",mac:"e0:55:3d:00:00:02",vlan:"1",location:"Comms room",ports:"52",role:"Core, PoE",uplinkId:mx.id,parentPort:"LAN 3",uplinkPort:"Port 49",linkSpeed:"10G",linkMedia:"fiber",linkLag:true,lagCount:"2",
+    portMap:{
+      "12":{name:"AP-Lobby",vlan:"1",mode:"trunk",poe:true,allowed:"1,10,20"},
+      "20":{name:"CAM-Lobby",vlan:"30",mode:"access",poe:true,allowed:""},
+      "24":{name:"SW-Floor2",vlan:"1",mode:"trunk",poe:false,allowed:"1,10,20,40"},
+      "49":{name:"Uplink to MX-Edge",vlan:"1",mode:"trunk",poe:false,allowed:"1,10,20,30,40"}}});
+  var f2=blank("switch",{name:"SW-Floor2",model:"MS120-24P",serial:"Q2BB-0000-0003",ip:"10.0.0.3",mac:"e0:55:3d:00:00:03",vlan:"1",location:"Floor 2 closet",ports:"28",role:"Access, PoE",uplinkId:core.id,parentPort:"Port 24",uplinkPort:"Port 25",linkSpeed:"10G",linkMedia:"fiber",
+    portMap:{
+      "3":{name:"AP-OpenOffice",vlan:"1",mode:"trunk",poe:true,allowed:"1,10,20"},
+      "4":{name:"AP-Meeting",vlan:"1",mode:"trunk",poe:true,allowed:"1,10"},
+      "10":{name:"PRN-Floor2",vlan:"40",mode:"access",poe:false,allowed:""},
+      "11":{name:"SCN-Records",vlan:"40",mode:"access",poe:false,allowed:""},
+      "25":{name:"Uplink to SW-Core",vlan:"1",mode:"trunk",poe:false,allowed:"1,10,20,40"}}});
+  var a1=blank("ap",{name:"AP-Lobby",model:"MR46",serial:"Q3CC-0000-0004",ip:"10.0.0.21",vlan:"1",location:"Lobby",radio:"2.4 + 5 GHz",wifi:"6",uplinkId:core.id,parentPort:"Port 12",uplinkPort:"Eth0",linkSpeed:"1G",linkMedia:"copper",
+    ssidList:[{name:"Staff",vlan:"10",band:"",sec:"wpa3"},{name:"Guest",vlan:"20",band:"",sec:"wpa2"}]});
+  var a2=blank("ap",{name:"AP-OpenOffice",model:"MR46",serial:"Q3CC-0000-0005",ip:"10.0.0.22",vlan:"1",location:"Floor 2 open office",radio:"2.4 + 5 GHz",wifi:"6",uplinkId:f2.id,parentPort:"Port 3",uplinkPort:"Eth0",linkSpeed:"2.5G",linkMedia:"copper",
+    ssidList:[{name:"Staff",vlan:"10",band:"",sec:"wpa3"},{name:"Guest",vlan:"20",band:"",sec:"wpa2"}]});
+  var a3=blank("ap",{name:"AP-Meeting",model:"MR36",serial:"Q3CC-0000-0006",ip:"10.0.0.23",vlan:"1",location:"Floor 2 meeting room",radio:"5 GHz",wifi:"5",uplinkId:f2.id,parentPort:"Port 4",uplinkPort:"Eth0",linkSpeed:"1G",linkMedia:"copper",
+    ssidList:[{name:"Staff",vlan:"10",band:"5",sec:"wpa3"}]});
+  var cam=blank("camera",{name:"CAM-Lobby",model:"MV12",serial:"Q4DD-0000-0007",ip:"10.0.30.11",vlan:"30",location:"Lobby ceiling",nvr:"Cloud",res:"4 MP",uplinkId:core.id,parentPort:"Port 20",uplinkPort:"Eth0",linkSpeed:"1G",linkMedia:"copper"});
+  var prn=blank("printer",{name:"PRN-Floor2",model:"Color laser MFP",ip:"10.0.40.5",vlan:"40",location:"Floor 2 copy room",queue:"PRN-FLOOR2",kind:"Color laser MFP",uplinkId:f2.id,parentPort:"Port 10",uplinkPort:"LAN",linkSpeed:"1G",linkMedia:"copper"});
+  var scn=blank("scanner",{name:"SCN-Records",model:"Document scanner",ip:"10.0.40.6",vlan:"40",location:"Records room",hostname:"SCAN-RECORDS",kind:"Document",uplinkId:f2.id,parentPort:"Port 11",uplinkPort:"LAN",linkSpeed:"1G",linkMedia:"copper"});
+  return {id:uid(),name:"Sample office",isp:"Example ISP",
+    vlans:[{id:"1",name:"Management",subnet:"10.0.0.0/24",color:"#2b7de9"},{id:"10",name:"Staff",subnet:"10.0.10.0/24",color:"#e0742b"},{id:"20",name:"Guest",subnet:"10.0.20.0/24",color:"#1f9d6b"},{id:"30",name:"Cameras",subnet:"10.0.30.0/24",color:"#a24bd1"},{id:"40",name:"Printers",subnet:"10.0.40.0/24",color:"#d6457a"}],
+    devices:[mx,core,f2,a1,a2,a3,cam,prn,scn]};
+}
+
+function digitsOrEmpty(v){v=String(v==null?"":v);return /^\d{1,4}$/.test(v)?v:""}
+function isPortUsed(e){return !!(e&&(e.name||e.vlan||e.poe||e.allowed||e.mode==="trunk"))}
+function cleanSsids(a){
+  return (Array.isArray(a)?a:[]).slice(0,16).filter(function(o){return o&&typeof o==="object"}).map(function(o){
+    return {name:String(o.name||"").slice(0,64),vlan:digitsOrEmpty(o.vlan),band:BANDS.indexOf(String(o.band))>=0?String(o.band):"",sec:SEC.indexOf(o.sec)>=0?o.sec:""};
+  });
+}
+function cleanPorts(o){
+  var out={},n=0;
+  if(o&&typeof o==="object"&&!Array.isArray(o))Object.keys(o).forEach(function(k){
+    if(n>=128||!/^\d{1,3}$/.test(k)||+k<1)return;
+    var e=o[k];if(!e||typeof e!=="object")return;
+    var c={name:String(e.name||"").slice(0,80),vlan:digitsOrEmpty(e.vlan),mode:e.mode==="trunk"?"trunk":"access",poe:!!e.poe,allowed:String(e.allowed||"").slice(0,80)};
+    if(isPortUsed(c)){out[String(+k)]=c;n++}
+  });
+  return out;
+}
+
+function sanitizeNet(o){
+  if(!o||typeof o!=="object"||!Array.isArray(o.devices)) throw new Error(tr("err.notNetwork"));
+  var seen={};
+  var devices=o.devices.slice(0,500).filter(function(x){return x&&typeof x==="object"}).map(function(x){
+    var d=blank(TYPES[x.type]?x.type:"switch");
+    var id=String(x.id||"").replace(/[^\w-]/g,"");
+    if(id&&!seen[id]) d.id=id;
+    seen[d.id]=1;
+    KEYS.forEach(function(k){d[k]=String(x[k]==null?"":x[k]).slice(0,1000)});
+    d.uplinkId=String(x.uplinkId||"").replace(/[^\w-]/g,"");
+    d.linkLag=!!x.linkLag;
+    if(SPEEDS.indexOf(d.linkSpeed)<0)d.linkSpeed="";
+    if(MEDIA.indexOf(d.linkMedia)<0)d.linkMedia="";
+    d.lagCount=(/^\d{1,2}$/.test(d.lagCount)&&+d.lagCount>=2&&+d.lagCount<=16)?d.lagCount:"";
+    if(WIFI.indexOf(d.wifi)<0)d.wifi="";
+    d.ssidList=cleanSsids(x.ssidList);
+    d.portMap=cleanPorts(x.portMap);
+    if(!d.ssidList.length&&d.ssids){
+      d.ssidList=d.ssids.split(/[,;\n]+/).map(function(z){return z.trim()}).filter(Boolean).slice(0,16).map(function(z){return {name:z.slice(0,64),vlan:"",band:"",sec:""}});
+      d.ssids="";
+    }
+    if(Number.isFinite(x.x)) d.x=x.x;
+    if(Number.isFinite(x.y)) d.y=x.y;
+    return d;
+  });
+  var vseen={};
+  var vlans=(Array.isArray(o.vlans)?o.vlans:[]).slice(0,200).filter(function(v){
+    if(!v||typeof v!=="object"||!/^\d{1,4}$/.test(String(v.id)))return false;
+    var id=String(v.id);if(vseen[id])return false;vseen[id]=1;return true;
+  }).map(function(v,i){
+    return {id:String(v.id),name:String(v.name||"").slice(0,40),subnet:String(v.subnet||"").slice(0,43),
+      color:/^#[0-9a-fA-F]{6}$/.test(v.color)?v.color:PALETTE[i%PALETTE.length]};
+  });
+  function addVlanId(id){
+    if(/^\d{1,4}$/.test(id)&&!vseen[id]){vseen[id]=1;vlans.push({id:id,name:"",subnet:"",color:PALETTE[vlans.length%PALETTE.length]})}
+  }
+  devices.forEach(function(d){
+    addVlanId(d.vlan);
+    d.ssidList.forEach(function(z){addVlanId(z.vlan)});
+    Object.keys(d.portMap).forEach(function(k){addVlanId(d.portMap[k].vlan)});
+  });
+  vlans.sort(function(a,b){return a.id-b.id});
+  return {id:uid(),name:String(o.name||"Imported network").slice(0,80),isp:String(o.isp||"").slice(0,60),vlans:vlans,devices:devices};
+}
+
+function load(){
+  try{
+    var raw=localStorage.getItem(KEY);
+    if(raw){
+      var o=JSON.parse(raw);
+      var nets=(o.networks||[]).map(function(n){
+        try{var s=sanitizeNet(n); if(typeof n.id==="string"&&/^[\w-]+$/.test(n.id)) s.id=n.id; return s}catch(e){return null}
+      }).filter(Boolean);
+      if(nets.length) return {networks:nets,activeId:nets.some(function(n){return n.id===o.activeId})?o.activeId:nets[0].id};
+    }
+  }catch(e){}
+  var s=sample();
+  return {networks:[s],activeId:s.id};
+}
+
+var store=load();
+var selectedId=null, selPort=null, zoom=1, lastLayout=null, frozenB=null, drag=null, raf=0;
+var confirmNet=false, confirmNetTimer=0, confirmDev=false, confirmVlan=null, vlanTimer=0;
+
+var net=function(){return store.networks.find(function(n){return n.id===store.activeId})};
+var dev=function(id){return net().devices.find(function(d){return d.id===id})};
+
+/* ---------- persistence ---------- */
+var saveTimer=0;
+function persist(quiet){
+  clearTimeout(saveTimer);
+  saveTimer=setTimeout(function(){
+    try{
+      localStorage.setItem(KEY,JSON.stringify(store));
+      var now=new Date();
+      if(!quiet)setStatus(tr("st.autosaved",{time:String(now.getHours()).padStart(2,"0")+":"+String(now.getMinutes()).padStart(2,"0")}));
+    }catch(e){
+      setStatus(tr("st.saveFail"));
+    }
+  },200);
+}
+function setStatus(t){$("#status").textContent=t}
+
+/* ---------- undo / redo ---------- */
+var undoStack=[],redoStack=[],lastKey=null,lastT=0;
+function snap(){return JSON.stringify(store.networks)}
+function updateHistory(){
+  var u=$("#undoBtn"),r=$("#redoBtn");
+  if(u)u.disabled=!undoStack.length;
+  if(r)r.disabled=!redoStack.length;
+}
+function mark(key){
+  var now=Date.now();
+  if(key&&key===lastKey&&now-lastT<1200){lastT=now;return}
+  lastKey=key||null;lastT=now;
+  undoStack.push(snap());
+  if(undoStack.length>100)undoStack.shift();
+  redoStack=[];
+  updateHistory();
+}
+function restore(str){
+  var before=store.networks.map(function(n){return n.id});
+  store.networks=JSON.parse(str);
+  var ids=store.networks.map(function(n){return n.id});
+  var added=ids.filter(function(i){return before.indexOf(i)<0})[0];
+  if(added)store.activeId=added;
+  else if(ids.indexOf(store.activeId)<0)store.activeId=ids[0];
+  if(selectedId&&!dev(selectedId)){selectedId=null;selPort=null}
+  frozenB=null;lastKey=null;confirmDev=false;confirmNet=false;confirmVlan=null;
+  persist(true);renderAll();
+}
+function undo(){
+  if(!undoStack.length)return;
+  redoStack.push(snap());
+  restore(undoStack.pop());
+  setStatus(tr("st.undone"));
+}
+function redo(){
+  if(!redoStack.length)return;
+  undoStack.push(snap());
+  restore(redoStack.pop());
+  setStatus(tr("st.redone"));
+}
+
+/* ---------- layout ---------- */
+function descendants(id){
+  var out=new Set(),queue=[id],devs=net().devices;
+  while(queue.length){
+    var cur=queue.shift();
+    devs.forEach(function(d){ if(d.uplinkId===cur&&!out.has(d.id)){out.add(d.id);queue.push(d.id)} });
+  }
+  return out;
+}
+
+function layout(n){
+  var devs=n.devices, ids=new Set(devs.map(function(d){return d.id})), parent={};
+  devs.forEach(function(d){parent[d.id]=(d.uplinkId&&ids.has(d.uplinkId)&&d.uplinkId!==d.id)?d.uplinkId:ROOT});
+  devs.forEach(function(d){
+    var seen=new Set([d.id]),p=parent[d.id];
+    while(p!==ROOT){
+      if(p===d.id){parent[d.id]=ROOT;break}
+      if(seen.has(p))break;
+      seen.add(p);p=parent[p];
+    }
+  });
+  var kids={};kids[ROOT]=[];
+  devs.forEach(function(d){kids[d.id]=[]});
+  devs.forEach(function(d){kids[parent[d.id]].push(d)});
+  var memo={};
+  function span(id){var ks=kids[id];return ks.reduce(function(s,k){return s+wid(k.id)},0)+Math.max(0,ks.length-1)*GX}
+  function wid(id){if(memo[id]!=null)return memo[id];return memo[id]=Math.max(W,span(id))}
+  var auto={};
+  function place(id,left,depth){
+    var w=wid(id),cx=left+w/2;
+    auto[id]={x:cx-W/2,y:depth===0?0:IH+GY+(depth-1)*(H+GY)};
+    var x=left+(w-span(id))/2;
+    kids[id].forEach(function(k){place(k.id,x,depth+1);x+=wid(k.id)+GX});
+  }
+  place(ROOT,0,0);
+  var pos={};pos[ROOT]=auto[ROOT];
+  devs.forEach(function(d){var a=auto[d.id];pos[d.id]={x:Number.isFinite(d.x)?d.x:a.x,y:Number.isFinite(d.y)?d.y:a.y}});
+  var x0=Infinity,y0=Infinity,x1=-Infinity,y1=-Infinity;
+  function add(p,w,h){x0=Math.min(x0,p.x);y0=Math.min(y0,p.y);x1=Math.max(x1,p.x+w);y1=Math.max(y1,p.y+h)}
+  add(pos[ROOT],W,IH);
+  devs.forEach(function(d){add(pos[d.id],W,H)});
+  var bx=x0-PAD,by=y0-PAD,bw=x1-x0+PAD*2,bh=y1-y0+PAD*2;
+  if(bw<460){bx-=(460-bw)/2;bw=460}
+  if(bh<280)bh=280;
+  return {pos:pos,parent:parent,bounds:{x:bx,y:by,w:bw,h:bh}};
+}
+
+/* ---------- diagram markup ---------- */
+function pill(cx,y,text,strong){
+  var w=Math.max(30,text.length*6.4+14);
+  return '<g><rect x="'+(cx-w/2)+'" y="'+(y-9)+'" width="'+w+'" height="18" rx="9" style="fill:var(--panel);stroke:var(--line);stroke-width:1"/>'+
+    '<text x="'+cx+'" y="'+(y+4)+'" text-anchor="middle" style="font:'+(strong?600:500)+' 10.5px var(--mono);fill:'+(strong?"var(--ink)":"var(--muted)")+'">'+esc(text)+'</text></g>';
+}
+
+function linkText(d){
+  var cnt=parseInt(d.lagCount,10)||2,parts=[];
+  if(d.linkSpeed)parts.push((d.linkLag?cnt+"× ":"")+d.linkSpeed);
+  else if(d.linkLag)parts.push("LAG ×"+cnt);
+  if(d.linkMedia)parts.push(tr("media."+d.linkMedia).toLowerCase());
+  return parts.join(" ");
+}
+
+function nodeMarkup(d,p,sel,vmap){
+  var T=TYPES[d.type]||TYPES.other,c="var("+T.v+")",v=d.vlan?vmap[d.vlan]:null;
+  var tip=[(d.name||tr("unnamed"))+" ("+T.label+")"];
+  [["f.model","model"],["f.serial","serial"],["f.ip","ip"],["f.mac","mac"],["f.location","location"]].forEach(function(r){if(d[r[1]])tip.push(tr(r[0])+": "+d[r[1]])});
+  var vtxt="";
+  if(d.vlan){
+    vtxt="VLAN "+d.vlan+(v&&v.name?" "+v.name:"");
+    tip.push(vtxt+(v&&v.subnet?" ("+v.subnet+")":""));
+  }
+  var lt=linkText(d);
+  if(lt)tip.push(tr("f.link")+": "+lt);
+  var hasW=d.type==="ap"&&d.ssidList.length>0;
+  if(hasW)tip.push(tr("f.ssids")+": "+d.ssidList.map(function(z){return (z.name||"?")+(z.vlan?" (VLAN "+z.vlan+")":"")}).join(", "));
+  var vline=d.vlan?'<circle cx="59" cy="73" r="4" style="fill:'+(v?v.color:"var(--muted)")+'"/>'+
+    '<text x="68" y="77" style="font:500 10.5px var(--sans);fill:var(--muted)">'+esc(trunc(vtxt,hasW?11:20))+'</text>':"";
+  var wl=hasW?'<g transform="translate('+(W-36)+' 66)" style="fill:none;stroke:var(--ap);stroke-width:1.4;stroke-linecap:round">'+
+    '<circle cx="5" cy="9.5" r=".9" style="fill:var(--ap)"/><path d="M2.6 6.6a3.4 3.4 0 0 1 4.8 0M.6 4.2a6.3 6.3 0 0 1 8.8 0"/></g>'+
+    '<text x="'+(W-12)+'" y="77" text-anchor="end" style="font:500 10.5px var(--sans);fill:var(--muted)">'+d.ssidList.length+'</text>':"";
+  return '<g class="node" data-id="'+d.id+'" tabindex="0" role="button" aria-label="'+esc((d.name||tr("unnamed"))+", "+T.label)+'" transform="translate('+p.x+' '+p.y+')" style="cursor:grab">'+
+    '<title>'+esc(tip.join("\n"))+'</title>'+
+    '<clipPath id="cp-'+d.id+'"><rect width="'+W+'" height="'+H+'" rx="9"/></clipPath>'+
+    '<rect width="'+W+'" height="'+H+'" rx="9" style="fill:var(--node);stroke:'+(sel?"var(--ink)":"var(--line)")+';stroke-width:'+(sel?2.5:1.25)+'"/>'+
+    '<rect width="8" height="'+H+'" clip-path="url(#cp-'+d.id+')" style="fill:'+c+'"/>'+
+    '<g transform="translate(19 '+(H/2-12)+')" style="fill:none;stroke:'+c+';stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round">'+T.icon+'</g>'+
+    '<text x="54" y="27" style="font:600 13px var(--sans);fill:var(--ink)">'+esc(trunc(d.name||tr("unnamed"),15))+'</text>'+
+    '<text x="54" y="44" style="font:400 11px var(--sans);fill:var(--muted)">'+esc(trunc(d.model||T.label,20))+'</text>'+
+    '<text x="54" y="60" style="font:400 11px var(--mono);fill:var(--muted)">'+esc(trunc(d.ip,17))+'</text>'+
+    vline+wl+
+  '</g>';
+}
+
+function diagramMarkup(n,L,selId,bgVar){
+  bgVar=bgVar||"--bg";
+  var edges="",pills="",nodes="";
+  var vmap={};n.vlans.forEach(function(v){vmap[v.id]=v});
+  var ip=L.pos[ROOT];
+  nodes+='<g transform="translate('+ip.x+' '+ip.y+')">'+
+    '<rect width="'+W+'" height="'+IH+'" rx="'+(IH/2)+'" style="fill:var(--node);stroke:var(--muted);stroke-width:1.25;stroke-dasharray:5 4"/>'+
+    '<text x="'+(W/2)+'" y="'+(n.isp?24:33)+'" text-anchor="middle" style="font:600 13px var(--sans);fill:var(--ink)">'+esc(tr("dia.internet"))+'</text>'+
+    (n.isp?'<text x="'+(W/2)+'" y="41" text-anchor="middle" style="font:400 11px var(--sans);fill:var(--muted)">'+esc(trunc(n.isp,26))+'</text>':"")+
+  '</g>';
+  n.devices.forEach(function(d){
+    var pid=L.parent[d.id],c=L.pos[d.id],p=L.pos[pid],ph=pid===ROOT?IH:H;
+    var x1=p.x+W/2,y1=p.y+ph,x2=c.x+W/2,y2=c.y,ym=y1+(y2-y1)/2;
+    var lv=d.vlan&&vmap[d.vlan],lc=lv?lv.color:"var(--link)",pd="M"+x1+" "+y1+" V"+ym+" H"+x2+" V"+y2;
+    if(d.linkLag){
+      edges+='<path d="'+pd+'" style="fill:none;stroke:'+lc+';stroke-width:6;stroke-linejoin:round"/>'+
+             '<path d="'+pd+'" style="fill:none;stroke:var('+bgVar+');stroke-width:2.5;stroke-linejoin:round"/>';
+    }else{
+      edges+='<path d="'+pd+'" style="fill:none;stroke:'+lc+';stroke-width:'+(lv?2.25:1.75)+';'+(pid===ROOT?"stroke-dasharray:6 4":"")+'"/>';
+    }
+    var lt=linkText(d);
+    if(lt)pills+=pill(x2,ym,trunc(lt,24),true);
+    var label="";
+    if(pid===ROOT){label=d.type==="mx"?d.wan:""}
+    else if(d.parentPort&&d.uplinkPort){label=d.parentPort+" → "+d.uplinkPort}
+    else label=d.parentPort||d.uplinkPort||"";
+    if(label)pills+=pill(x2,y2-17,trunc(label,26));
+  });
+  n.devices.forEach(function(d){nodes+=nodeMarkup(d,L.pos[d.id],d.id===selId,vmap)});
+  var hint="";
+  if(!n.devices.length){
+    hint='<text x="'+(ip.x+W/2)+'" y="'+(IH+58)+'" text-anchor="middle" style="font:400 13px var(--sans);fill:var(--muted)">'+esc(tr("dia.hint"))+'</text>';
+  }
+  return edges+pills+nodes+hint;
+}
+
+var svg=$("#dia"),gEl=$("#g"),canvas=$("#canvas"),editEl=$("#edit");
+
+function renderDiagram(refocus){
+  var n=net(),L=layout(n);lastLayout=L;
+  var b=frozenB||L.bounds;
+  svg.setAttribute("viewBox",b.x+" "+b.y+" "+b.w+" "+b.h);
+  svg.setAttribute("width",Math.round(b.w*zoom));
+  svg.setAttribute("height",Math.round(b.h*zoom));
+  gEl.innerHTML=diagramMarkup(n,L,selectedId);
+  $("#zoomLbl").textContent=Math.round(zoom*100)+"%";
+  renderLegend();
+  if(refocus&&selectedId){var el=gEl.querySelector('[data-id="'+selectedId+'"]');if(el)el.focus()}
+}
+
+function fit(){
+  if(!lastLayout)return;
+  var b=lastLayout.bounds,cw=canvas.clientWidth,ch=canvas.clientHeight;
+  if(!cw||!ch)return;
+  zoom=Math.round(clamp(Math.min(cw/b.w,ch/b.h,1),.3,2)*100)/100;
+  renderDiagram();
+}
+
+/* ---------- side panels ---------- */
+function renderBar(){
+  var n=net();
+  $("#netName").value=n.name;
+  $("#isp").value=n.isp||"";
+}
+function renderNets(){
+  $("#nets").innerHTML=store.networks.map(function(n){
+    var c=n.devices.length;
+    return '<button type="button" class="net'+(n.id===store.activeId?" on":"")+'" data-act="pick-net" data-id="'+n.id+'"><span class="nm">'+esc(n.name||tr("untitled"))+'</span><span class="ct">'+esc(plural("count",c))+'</span></button>';
+  }).join("");
+  var b=$("#delNet");
+  b.classList.toggle("confirm",confirmNet);
+  b.classList.toggle("danger",!confirmNet);
+  b.textContent=confirmNet?tr("net.deleteConfirm"):tr("net.delete");
+}
+function renderDevs(){
+  var devs=net().devices;
+  $("#devs").innerHTML=devs.length?devs.map(function(d){
+    var T=TYPES[d.type]||TYPES.switch;
+    return '<button type="button" class="dev'+(d.id===selectedId?" on":"")+'" data-act="pick-dev" data-id="'+d.id+'" style="--c:var('+T.v+')"><span class="nm">'+esc(d.name||tr("unnamed"))+'</span><span class="ip">'+esc(d.ip||T.short)+'</span></button>';
+  }).join(""):'<p class="muted">'+esc(tr("dev.none"))+'</p>';
+}
+
+function field(label,key,val,ph,mono){
+  return '<label class="f"><span>'+esc(label)+'</span><input data-k="'+key+'"'+(mono?' class="mono" dir="ltr"':' dir="auto"')+' value="'+esc(val)+'" placeholder="'+esc(ph||"")+'" autocomplete="off" spellcheck="false"></label>';
+}
+function phOf(p){return !p?"":(p.charAt(0)==="="?p.slice(1):tr(p))}
+function optHtml(opts,val){
+  return opts.map(function(o){return '<option value="'+esc(o[0])+'"'+(o[0]===val?" selected":"")+'>'+esc(o[1])+'</option>'}).join("");
+}
+function selField(label,key,val,opts){
+  return '<label class="f"><span>'+esc(label)+'</span><select data-k="'+key+'">'+optHtml(opts,val)+'</select></label>';
+}
+function vlanOpts(cur){
+  var vs=net().vlans,o=[["",tr("vlan.none")]].concat(vs.map(function(v){return [v.id,v.id+(v.name?" "+v.name:"")]}));
+  if(cur&&!vs.some(function(v){return v.id===cur}))o.push([cur,cur+" "+tr("vlan.undef")]);
+  return o;
+}
+
+/* port map */
+function portCount(d){return clamp(parseInt(d.ports,10)||0,0,96)}
+function portNum(s){var m=/(\d+)\s*$/.exec(String(s||""));return m?String(+m[1]):""}
+function portLinks(d){
+  var map={};
+  net().devices.forEach(function(x){
+    if(x.uplinkId===d.id){var k=portNum(x.parentPort);if(k)(map[k]=map[k]||[]).push(x.name||tr("unnamed"))}
+  });
+  return map;
+}
+function portGridHtml(d){
+  var n=portCount(d);
+  if(!n)return '<p class="muted">'+esc(tr("port.noCount"))+'</p>';
+  var links=portLinks(d),upk=portNum(d.uplinkPort),vm={},used=0,tiles="";
+  net().vlans.forEach(function(v){vm[v.id]=v});
+  for(var i=1;i<=n;i++){
+    var k=String(i),e=d.portMap[k]||null,ln=links[k]||[],up=k===upk,v=e&&e.vlan?vm[e.vlan]:null;
+    var isUsed=!!(e&&isPortUsed(e))||ln.length>0||up;
+    if(isUsed)used++;
+    var info=[tr("port.title",{n:i})];
+    if(e&&e.name)info.push(e.name);
+    if(e&&e.vlan)info.push("VLAN "+e.vlan);
+    if(e&&e.mode==="trunk")info.push(tr("mode.trunk"));
+    if(e&&e.poe)info.push("PoE");
+    ln.forEach(function(l){info.push(l)});
+    if(up)info.push(tr("port.isUplink"));
+    tiles+='<button type="button" class="pt'+(isUsed?" used":"")+(up?" up":"")+(selPort===k?" on":"")+'" data-act="pick-port" data-port="'+k+'" style="--c:'+(v?v.color:(e&&e.vlan?"var(--muted)":"var(--line)"))+'" aria-pressed="'+(selPort===k)+'" aria-label="'+esc(info.join(", "))+'" title="'+esc(info.join("\n"))+'"><b>'+i+'</b>'+(e&&e.poe?"<i></i>":"")+'</button>';
+  }
+  return '<p class="muted portmeta">'+esc(tr("port.used",{used:used,n:n}))+'</p><div class="pgrid">'+tiles+'</div>';
+}
+function portEditHtml(d){
+  var cnt=portCount(d);
+  if(!selPort||!cnt||+selPort>cnt)return '<p class="muted">'+esc(tr("port.pick"))+'</p>';
+  var k=selPort,e=d.portMap[k]||{name:"",vlan:"",mode:"access",poe:false,allowed:""};
+  var links=portLinks(d)[k]||[],trunk=e.mode==="trunk";
+  return '<h4>'+esc(tr("port.title",{n:k}))+'</h4>'+
+    (links.length?'<p class="muted">'+esc(tr("port.linked",{name:links.join(", ")}))+'</p>':"")+
+    (portNum(d.uplinkPort)===k?'<p class="muted">'+esc(tr("port.isUplink"))+'</p>':"")+
+    '<label class="f"><span>'+esc(tr("f.portName"))+'</span><input data-pk="name" dir="auto" value="'+esc(e.name)+'" placeholder="'+esc(tr("ph.portName"))+'" autocomplete="off"></label>'+
+    '<div class="g2"><label class="f"><span>'+esc(tr("f.portMode"))+'</span><select data-pk="mode">'+optHtml([["access",tr("mode.access")],["trunk",tr("mode.trunk")]],trunk?"trunk":"access")+'</select></label>'+
+    '<label class="f"><span>'+esc(tr(trunk?"f.nativeVlan":"f.vlan"))+'</span><select data-pk="vlan">'+optHtml(vlanOpts(e.vlan),e.vlan)+'</select></label></div>'+
+    (trunk?'<label class="f"><span>'+esc(tr("f.allowed"))+'</span><input data-pk="allowed" class="mono" dir="ltr" value="'+esc(e.allowed)+'" placeholder="'+esc(tr("ph.allowed"))+'" autocomplete="off"></label>':"")+
+    '<label class="chk"><input type="checkbox" data-pk="poe"'+(e.poe?" checked":"")+'><span>'+esc(tr("f.poe"))+'</span></label>'+
+    '<button type="button" class="btn" data-act="clear-port">'+esc(tr("port.clear"))+'</button>';
+}
+function portSecInner(d){return '<div id="pgridWrap">'+portGridHtml(d)+'</div><div id="pedit" class="pedit">'+portEditHtml(d)+'</div>'}
+function renderPortSec(refocusMode){
+  var d=selectedId&&dev(selectedId),sec=$("#portSec");
+  if(!d||!sec)return;
+  sec.innerHTML=portSecInner(d);
+  if(refocusMode){var m=sec.querySelector('[data-pk="mode"]');if(m)m.focus()}
+}
+
+/* wireless */
+function wlHtml(d){
+  var bandOpts=[["",tr("band.all")],["2.4","2.4 GHz"],["5","5 GHz"],["6","6 GHz"]];
+  var secOpts=[["",tr("sec.unset")],["open",tr("sec.open")],["wpa2","WPA2-PSK"],["wpa3","WPA3-SAE"],["ent","WPA2/3 Enterprise"]];
+  var rows=d.ssidList.map(function(z,i){
+    return '<div class="srow" data-si="'+i+'"><div class="stop">'+
+      '<input data-sk="name" dir="auto" value="'+esc(z.name)+'" placeholder="'+esc(tr("ssid.namePh"))+'" aria-label="'+esc(tr("ssid.namePh"))+'" autocomplete="off">'+
+      '<button type="button" class="btn vx danger" data-act="del-ssid" data-i="'+i+'" aria-label="'+esc(tr("ssid.removeAria",{n:i+1}))+'">'+esc(tr("ssid.remove"))+'</button></div>'+
+      '<div class="g3">'+
+      '<select data-sk="vlan" aria-label="'+esc(tr("ssid.aria.vlan"))+'">'+optHtml(vlanOpts(z.vlan),z.vlan)+'</select>'+
+      '<select data-sk="band" aria-label="'+esc(tr("ssid.aria.band"))+'">'+optHtml(bandOpts,z.band)+'</select>'+
+      '<select data-sk="sec" aria-label="'+esc(tr("ssid.aria.sec"))+'">'+optHtml(secOpts,z.sec)+'</select></div></div>';
+  }).join("");
+  return (d.ssidList.length?rows:'<p class="muted">'+esc(tr("ssid.none"))+'</p>')+
+    '<button type="button" class="btn" data-act="add-ssid"'+(d.ssidList.length>=16?" disabled":"")+'>'+esc(tr("ssid.add"))+'</button>';
+}
+function renderWl(){
+  var d=selectedId&&dev(selectedId),el=$("#wlSec");
+  if(d&&el)el.innerHTML=wlHtml(d);
+}
+
+function renderForm(){
+  var d=selectedId&&dev(selectedId);
+  if(!d){
+    editEl.innerHTML='<div class="empty"><h2>'+esc(tr("edit.title"))+'</h2><p>'+esc(tr("edit.empty"))+'</p></div>';
+    return;
+  }
+  var T=TYPES[d.type]||TYPES.other;
+  var bad=descendants(d.id);bad.add(d.id);
+  var upOpts='<option value="">'+esc(tr("uplink.internet"))+'</option>'+net().devices.filter(function(x){return !bad.has(x.id)}).map(function(x){
+    return '<option value="'+x.id+'"'+(x.id===d.uplinkId?" selected":"")+'>'+esc(x.name||tr("unnamed"))+' ('+esc((TYPES[x.type]||TYPES.other).short)+')</option>';
+  }).join("");
+  var typeOpts=Object.keys(TYPES).map(function(k){return '<option value="'+k+'"'+(k===d.type?" selected":"")+'>'+esc(TYPES[k].label)+'</option>'}).join("");
+  var tf=TYPE_FIELDS[d.type].map(function(f){return field(tr(f[1]),f[0],d[f[0]],phOf(f[2]),f[3])}).join("");
+  var unset=tr("opt.unset");
+  var speedOpts=[["",unset]].concat(SPEEDS.map(function(x){return [x,x]}));
+  var mediaOpts=[["",unset],["copper",tr("media.copper")],["fiber",tr("media.fiber")],["wireless",tr("media.wireless")]];
+  var wifiOpts=[["",unset]].concat(WIFI.map(function(x){return [x,"Wi-Fi "+x]}));
+  editEl.innerHTML=
+    '<div class="dh" style="--c:var('+T.v+')"><i></i><div><h2 id="dhName">'+esc(d.name||tr("unnamed"))+'</h2><p id="dhType">'+esc(T.label)+'</p></div></div>'+
+    '<label class="f"><span>'+esc(tr("f.type"))+'</span><select data-k="type">'+typeOpts+'</select></label>'+
+    field(tr("f.name"),"name",d.name,tr("ph.name"))+
+    '<div class="g2">'+field(tr("f.model"),"model",d.model,tr("ph.model"))+field(tr("f.serial"),"serial",d.serial,"Q2XX-XXXX-XXXX",true)+'</div>'+
+    '<div class="g2">'+field(tr("f.ip"),"ip",d.ip,"10.0.0.2",true)+field(tr("f.mac"),"mac",d.mac,"e0:55:3d:…",true)+'</div>'+
+    '<div class="g2">'+vlanSelect(d)+field(tr("f.location"),"location",d.location,tr("ph.location"))+'</div>'+
+    (tf?'<div class="g2">'+tf+'</div>':"")+
+    '<h3>'+esc(tr("sec.connection"))+'</h3>'+
+    '<label class="f"><span>'+esc(tr("f.uplink"))+'</span><select data-k="uplinkId">'+upOpts+'</select></label>'+
+    '<div class="g2">'+field(tr("f.parentPort"),"parentPort",d.parentPort,tr("ph.port"))+field(tr("f.ownPort"),"uplinkPort",d.uplinkPort,"Eth0")+'</div>'+
+    '<div class="g2">'+selField(tr("f.linkSpeed"),"linkSpeed",d.linkSpeed,speedOpts)+selField(tr("f.linkMedia"),"linkMedia",d.linkMedia,mediaOpts)+'</div>'+
+    '<div class="g2"><label class="chk"><input type="checkbox" data-k="linkLag"'+(d.linkLag?" checked":"")+'><span>'+esc(tr("f.lag"))+'</span></label>'+
+      '<label class="f"><span>'+esc(tr("f.lagCount"))+'</span><input data-k="lagCount" type="number" min="2" max="16" class="mono" dir="ltr" value="'+esc(d.lagCount)+'" placeholder="2"'+(d.linkLag?"":" disabled")+'></label></div>'+
+    (d.type==="ap"?'<h3>'+esc(tr("sec.wireless"))+'</h3><div class="g2">'+field(tr("f.radio"),"radio",d.radio,tr("ph.radio"))+selField(tr("f.wifi"),"wifi",d.wifi,wifiOpts)+'</div><div id="wlSec">'+wlHtml(d)+'</div>':"")+
+    (d.type==="switch"?'<h3>'+esc(tr("sec.ports"))+'</h3><div id="portSec">'+portSecInner(d)+'</div>':"")+
+    '<h3>'+esc(tr("sec.notes"))+'</h3>'+
+    '<label class="f"><textarea data-k="notes" dir="auto" aria-label="'+esc(tr("sec.notes"))+'" rows="4" placeholder="'+esc(tr("ph.notes"))+'">'+esc(d.notes)+'</textarea></label>'+
+    '<h3>'+esc(tr("sec.remove"))+'</h3>'+
+    '<button type="button" class="btn '+(confirmDev?"confirm":"danger")+'" data-act="del-dev">'+esc(confirmDev?tr("dev.deleteConfirm"):tr("dev.delete"))+'</button>'+
+    '<p class="delnote">'+esc(tr("dev.deleteNote"))+'</p>';
+}
+
+/* ---------- VLANs ---------- */
+function vlanSelect(d){
+  var vs=net().vlans,known=vs.some(function(v){return v.id===d.vlan});
+  var label=tr((d.type==="mx"||d.type==="switch"||d.type==="ap")?"f.vlanMgmt":"f.vlan");
+  var o='<option value="">'+esc(tr(vs.length?"vlan.none":"vlan.noneAdd"))+'</option>'+vs.map(function(v){
+    return '<option value="'+esc(v.id)+'"'+(v.id===d.vlan?" selected":"")+'>'+esc(v.id+(v.name?" "+v.name:""))+'</option>';
+  }).join("");
+  if(d.vlan&&!known)o+='<option value="'+esc(d.vlan)+'" selected>'+esc(d.vlan)+' '+esc(tr("vlan.undef"))+'</option>';
+  return '<label class="f"><span>'+esc(label)+'</span><select data-k="vlan">'+o+'</select></label>';
+}
+function nextColor(n){
+  var used=n.vlans.map(function(v){return v.color.toLowerCase()});
+  var free=PALETTE.filter(function(c){return used.indexOf(c)<0});
+  return free.length?free[0]:PALETTE[n.vlans.length%PALETTE.length];
+}
+function renderVlans(){
+  var n=net();
+  $("#vlans").innerHTML=n.vlans.length?n.vlans.map(function(v){
+    var used=n.devices.filter(function(d){return d.vlan===v.id}).length;
+    var id=esc(v.id),conf=confirmVlan===v.id;
+    return '<div class="vrow"><div class="vtop">'+
+      '<input type="color" class="vc" data-vid="'+id+'" data-vk="color" value="'+esc(v.color)+'" aria-label="'+esc(tr("vlan.aria.color",{id:v.id}))+'">'+
+      '<span class="vid">VLAN '+id+'<small>'+esc(plural("count",used))+'</small></span>'+
+      '<button type="button" class="btn vx '+(conf?"confirm":"danger")+'" data-act="del-vlan" data-id="'+id+'" aria-label="'+esc(tr("vlan.aria.delete",{id:v.id}))+'">'+esc(tr(conf?"vlan.delConfirm":"vlan.del"))+'</button></div>'+
+      '<div class="g2"><input type="text" dir="auto" data-vid="'+id+'" data-vk="name" value="'+esc(v.name)+'" placeholder="'+esc(tr("vlan.nameShort"))+'" aria-label="'+esc(tr("vlan.aria.nameOf",{id:v.id}))+'">'+
+      '<input type="text" class="mono" dir="ltr" data-vid="'+id+'" data-vk="subnet" value="'+esc(v.subnet)+'" placeholder="'+esc(tr("vlan.subnetShort"))+'" aria-label="'+esc(tr("vlan.aria.subnetOf",{id:v.id}))+'"></div></div>';
+  }).join(""):'<p class="muted">'+esc(tr("vlan.empty"))+'</p>';
+}
+function renderLegend(){
+  var n=net(),el=$("#legend");
+  if(!n.vlans.length){el.hidden=true;el.innerHTML="";return}
+  var cnt={};n.devices.forEach(function(d){if(d.vlan)cnt[d.vlan]=(cnt[d.vlan]||0)+1});
+  el.innerHTML=n.vlans.map(function(v){
+    return '<span style="--c:'+esc(v.color)+'"><i></i><strong>VLAN '+esc(v.id)+'</strong>'+(v.name?" "+esc(v.name):"")+
+      (v.subnet?' <small>'+esc(v.subnet)+'</small>':"")+' <small>('+(cnt[v.id]||0)+')</small></span>';
+  }).join("");
+  el.hidden=false;
+}
+function legendSvg(n,w){
+  var x=0,y=0,out="";
+  n.vlans.forEach(function(v){
+    var label="VLAN "+v.id+(v.name?" "+v.name:"")+(v.subnet?" ("+v.subnet+")":"");
+    var cw=26+label.length*6.4+18;
+    if(x>0&&x+cw>w){x=0;y+=22}
+    out+='<rect x="'+x+'" y="'+(y+6)+'" width="16" height="4" rx="2" style="fill:'+v.color+'"/>'+
+      '<text x="'+(x+22)+'" y="'+(y+12)+'" style="font:400 12px var(--sans);fill:var(--ink)">'+esc(label)+'</text>';
+    x+=cw;
+  });
+  return {svg:out,h:n.vlans.length?y+22:0};
+}
+
+/* ---------- state changes ---------- */
+function touch(){persist();renderDiagram();renderDevs();renderNets()}
+
+function select(id,opts){
+  if(selectedId!==id)selPort=null;
+  selectedId=id;confirmDev=false;
+  renderDevs();renderForm();renderDiagram(opts&&opts.refocus);
+  if(id&&opts&&opts.scroll&&isMobile())editEl.scrollIntoView({behavior:"smooth",block:"start"});
+}
+
+function switchNet(id){
+  store.activeId=id;selectedId=null;selPort=null;confirmDev=false;confirmNet=false;confirmVlan=null;frozenB=null;
+  persist();renderAll();
+  requestAnimationFrame(fit);
+}
+
+function addDevice(type){
+  mark(null);
+  var n=net(),count=n.devices.filter(function(d){return d.type===type}).length+1;
+  var name=TYPES[type].prefix+"-"+String(count).padStart(2,"0");
+  var up="";
+  if(type!=="mx"){
+    var sel=selectedId&&dev(selectedId),ep=!!ENDPOINTS[type];
+    var mx=n.devices.find(function(d){return d.type==="mx"}),sw=n.devices.find(function(d){return d.type==="switch"});
+    if(sel&&(sel.type==="mx"||sel.type==="switch"||(ep&&sel.type==="ap")))up=sel.id;
+    else up=type==="switch"?((mx||sw||{}).id||""):((sw||mx||{}).id||"");
+  }
+  var d=blank(type,{name:name,uplinkId:up,ports:type==="switch"?"24":""});
+  n.devices.push(d);
+  persist();
+  select(d.id,{scroll:true});
+  renderNets();
+  var inp=editEl.querySelector('[data-k="name"]');
+  if(inp&&!isMobile()){inp.focus();inp.select()}
+}
+
+/* ---------- file save / open / export ---------- */
+var dlPromise=(function(){
+  try{if(window.claude&&typeof window.claude.use==="function")return window.claude.use("downloads").catch(function(){return null})}catch(e){}
+  return Promise.resolve(null);
+})();
+
+function showFallback(name,text){
+  $("#fbName").textContent=name;
+  $("#fbText").value=text;
+  var dlg=$("#fb");
+  if(typeof dlg.showModal==="function")dlg.showModal();else dlg.setAttribute("open","");
+}
+async function deliver(filename,data,okMsg){
+  var dl=await dlPromise;
+  if(!dl){
+    try{
+      var type=/\.svg$/.test(filename)?"image/svg+xml":/\.png$/.test(filename)?"image/png":"application/json";
+      var blob=(typeof data==="string")?new Blob([data],{type:type}):data;
+      var url=URL.createObjectURL(blob);
+      var a=document.createElement("a");
+      a.href=url;a.download=filename;document.body.appendChild(a);a.click();a.remove();
+      setTimeout(function(){URL.revokeObjectURL(url)},1000);
+      setStatus(okMsg+" "+tr("st.downloads"));
+    }catch(err){
+      if(typeof data==="string")showFallback(filename,data);else setStatus(tr("st.pngFail"));
+    }
+    return;
+  }
+  try{
+    await dl.save({filename:filename,data:data});
+    setStatus(okMsg);
+  }catch(e){
+    var code=e&&e.code;
+    if(code==="declined")setStatus(tr("st.cancelled"));
+    else if(code==="rate_limited")setStatus(tr("st.rate"));
+    else if(typeof data==="string")showFallback(filename,data);
+    else setStatus(tr("st.pngFail"));
+  }
+}
+function saveFile(){
+  var n=net();
+  var data=JSON.stringify({format:"network-map",version:3,name:n.name,isp:n.isp||"",vlans:n.vlans,devices:n.devices},null,2);
+  deliver(slug(n.name)+".network.json",data,tr("st.fileSaved"));
+}
+function svgInfo(){
+  var n=net(),L=layout(n),b=L.bounds;
+  var cs=getComputedStyle(document.documentElement);
+  var lg=legendSvg(n,b.w-32),top=lg.h?lg.h+14:0,y0=b.y-top,h=b.h+top;
+  var str='<svg xmlns="http://www.w3.org/2000/svg" viewBox="'+b.x+' '+y0+' '+b.w+' '+h+'" width="'+b.w+'" height="'+h+'">'+
+    '<rect x="'+b.x+'" y="'+y0+'" width="'+b.w+'" height="'+h+'" style="fill:var(--panel)"/>'+
+    (lg.h?'<g transform="translate('+(b.x+16)+' '+(y0+8)+')">'+lg.svg+'</g>':"")+
+    diagramMarkup(n,L,null,"--panel")+'</svg>';
+  str=str.replace(/var\((--[\w-]+)\)/g,function(m,k){var v=cs.getPropertyValue(k).trim();return v?v.replace(/"/g,"'"):m});
+  return {svg:str,w:b.w,h:h};
+}
+function exportSvg(){deliver(slug(net().name)+".svg",svgInfo().svg,tr("st.svgSaved"))}
+function exportPng(){
+  var info=svgInfo(),scale=Math.min(2,8000/Math.max(info.w,info.h));
+  var img=new Image();
+  img.onload=function(){
+    try{
+      var c=document.createElement("canvas");
+      c.width=Math.max(1,Math.round(info.w*scale));
+      c.height=Math.max(1,Math.round(info.h*scale));
+      c.getContext("2d").drawImage(img,0,0,c.width,c.height);
+      c.toBlob(function(blob){
+        if(!blob){setStatus(tr("st.pngFail"));return}
+        deliver(slug(net().name)+".png",blob,tr("st.pngSaved"));
+      },"image/png");
+    }catch(err){setStatus(tr("st.pngFail"))}
+  };
+  img.onerror=function(){setStatus(tr("st.pngFail"))};
+  img.src="data:image/svg+xml;charset=utf-8,"+encodeURIComponent(info.svg);
+}
+
+function importText(text){
+  var o;
+  try{o=JSON.parse(text)}catch(e){setStatus(tr("st.badJson"));return}
+  try{
+    var n=sanitizeNet(o);
+    mark(null);
+    store.networks.push(n);
+    switchNet(n.id);
+    setStatus(tr("st.opened",{name:n.name,count:plural("count",n.devices.length)}));
+  }catch(e){setStatus(e.message)}
+}
+
+/* ---------- events ---------- */
+var actions={
+  "pick-net":function(t){switchNet(t.dataset.id)},
+  "pick-dev":function(t){select(t.dataset.id,{scroll:true})},
+  "add":function(t){addDevice(t.dataset.type)},
+  "import":function(){$("#file").click()},
+  "save-file":saveFile,
+  "export-svg":exportSvg,
+  "auto":function(){mark(null);net().devices.forEach(function(d){delete d.x;delete d.y});persist();renderDiagram();fit()},
+  "zoom-in":function(){zoom=Math.round(clamp(zoom+.1,.3,2)*100)/100;renderDiagram()},
+  "zoom-out":function(){zoom=Math.round(clamp(zoom-.1,.3,2)*100)/100;renderDiagram()},
+  "fit":fit,
+  "undo":undo,
+  "redo":redo,
+  "export-png":exportPng,
+  "pick-port":function(t){selPort=(selPort===t.dataset.port)?null:t.dataset.port;renderPortSec();var b=editEl.querySelector('.pt[data-port="'+t.dataset.port+'"]');if(b)b.focus()},
+  "clear-port":function(){var d=selectedId&&dev(selectedId);if(!d||!selPort)return;mark(null);delete d.portMap[selPort];persist();renderPortSec()},
+  "add-ssid":function(){
+    var d=selectedId&&dev(selectedId);if(!d||d.ssidList.length>=16)return;
+    mark(null);d.ssidList.push({name:"",vlan:"",band:"",sec:""});
+    persist();renderWl();renderDiagram();
+    var ins=editEl.querySelectorAll('[data-sk="name"]');if(ins.length)ins[ins.length-1].focus();
+  },
+  "del-ssid":function(t){var d=selectedId&&dev(selectedId);if(!d)return;mark(null);d.ssidList.splice(+t.dataset.i,1);persist();renderWl();renderDiagram()},
+  "del-net":function(){
+    clearTimeout(confirmNetTimer);
+    if(!confirmNet){
+      confirmNet=true;renderNets();
+      confirmNetTimer=setTimeout(function(){confirmNet=false;renderNets()},5000);
+      return;
+    }
+    confirmNet=false;
+    mark(null);
+    var id=store.activeId,name=net().name;
+    store.networks=store.networks.filter(function(n){return n.id!==id});
+    if(!store.networks.length)store.networks.push({id:uid(),name:tr("net.new"),isp:"",vlans:[],devices:[]});
+    switchNet(store.networks[0].id);
+    setStatus(tr("st.deletedNet",{name:name}));
+  },
+  "del-vlan":function(t){
+    var id=t.dataset.id;clearTimeout(vlanTimer);
+    if(confirmVlan!==id){
+      confirmVlan=id;renderVlans();
+      vlanTimer=setTimeout(function(){confirmVlan=null;renderVlans()},5000);
+      return;
+    }
+    confirmVlan=null;
+    var n=net();
+    mark(null);
+    n.vlans=n.vlans.filter(function(v){return v.id!==id});
+    persist();renderVlans();renderForm();renderDiagram();
+    setStatus(tr("st.vlanDeleted",{id:id}));
+  },
+  "del-dev":function(){
+    if(!confirmDev){confirmDev=true;renderForm();return}
+    var n=net(),d=dev(selectedId);if(!d)return;
+    mark(null);
+    n.devices.forEach(function(x){if(x.uplinkId===d.id)x.uplinkId=d.uplinkId});
+    n.devices=n.devices.filter(function(x){return x.id!==d.id});
+    selectedId=null;confirmDev=false;
+    persist();renderDevs();renderForm();renderDiagram();renderNets();
+  }
+};
+document.addEventListener("click",function(e){
+  var t=e.target.closest("[data-act]");
+  if(t&&actions[t.dataset.act])actions[t.dataset.act](t);
+  if(e.target.closest(".node")&&isMobile())editEl.scrollIntoView({behavior:"smooth",block:"start"});
+});
+
+$("#newForm").addEventListener("submit",function(e){
+  e.preventDefault();
+  var inp=$("#newName"),name=inp.value.trim();
+  if(!name){inp.focus();return}
+  var base=name,i=2;
+  while(store.networks.some(function(n){return n.name===name}))name=base+" "+(i++);
+  var n={id:uid(),name:name,isp:"",vlans:[],devices:[]};
+  mark(null);
+  store.networks.push(n);inp.value="";
+  switchNet(n.id);
+  setStatus(tr("st.created",{name:name}));
+});
+
+$("#netName").addEventListener("input",function(e){mark("n:"+store.activeId+":name");net().name=e.target.value;persist();renderNets()});
+$("#isp").addEventListener("input",function(e){mark("n:"+store.activeId+":isp");net().isp=e.target.value;persist();renderDiagram()});
+
+$("#file").addEventListener("change",function(e){
+  var f=e.target.files&&e.target.files[0];
+  if(!f)return;
+  if(f.size>5*1024*1024){setStatus(tr("st.tooLarge"));e.target.value="";return}
+  var r=new FileReader();
+  r.onload=function(){importText(String(r.result))};
+  r.onerror=function(){setStatus(tr("st.readFail"))};
+  r.readAsText(f);
+  e.target.value="";
+});
+
+editEl.addEventListener("input",function(e){
+  var t=e.target,k=t.dataset.k,d=selectedId&&dev(selectedId);
+  if(!d)return;
+  if(k){
+    if(k==="type"||k==="uplinkId")return;
+    mark("f:"+d.id+":"+k);
+    d[k]=t.type==="checkbox"?t.checked:t.value;
+    if(k==="name")$("#dhName").textContent=d.name||tr("unnamed");
+    if(k==="linkLag"){var cnt=editEl.querySelector('[data-k="lagCount"]');if(cnt)cnt.disabled=!t.checked}
+    if(k==="ports"||k==="uplinkPort")renderPortSec();
+    touch();
+    return;
+  }
+  if(t.dataset.sk){
+    var row=t.closest(".srow"),i=row?+row.dataset.si:-1,z=d.ssidList[i];
+    if(!z)return;
+    mark("s:"+d.id+":"+i+":"+t.dataset.sk);
+    z[t.dataset.sk]=t.value;
+    persist();renderDiagram();
+    return;
+  }
+  var pk=t.dataset.pk;
+  if(pk&&selPort){
+    mark("p:"+d.id+":"+selPort+":"+pk);
+    var pe=d.portMap[selPort]||(d.portMap[selPort]={name:"",vlan:"",mode:"access",poe:false,allowed:""});
+    pe[pk]=t.type==="checkbox"?t.checked:t.value;
+    if(!isPortUsed(pe))delete d.portMap[selPort];
+    persist();
+    var gw=$("#pgridWrap");if(gw)gw.innerHTML=portGridHtml(d);
+    if(pk==="mode")renderPortSec(true);
+  }
+});
+editEl.addEventListener("change",function(e){
+  var k=e.target.dataset.k,d=selectedId&&dev(selectedId);
+  if(!k||!d)return;
+  if(k==="type"){mark(null);d.type=e.target.value;touch();renderForm()}
+  else if(k==="uplinkId"){mark(null);d.uplinkId=e.target.value;touch()}
+});
+
+$("#vlanForm").addEventListener("submit",function(e){
+  e.preventDefault();
+  var idEl=$("#vId"),id=idEl.value.trim().replace(/^0+(?=\d)/,""),n=net();
+  if(!/^\d{1,4}$/.test(id)||+id<1||+id>4094){setStatus(tr("st.vlanBadId"));idEl.focus();return}
+  if(n.vlans.some(function(v){return v.id===id})){setStatus(tr("st.vlanExists",{id:id}));idEl.focus();return}
+  mark(null);
+  n.vlans.push({id:id,name:$("#vName").value.trim().slice(0,40),subnet:$("#vSub").value.trim().slice(0,43),color:nextColor(n)});
+  n.vlans.sort(function(a,b){return a.id-b.id});
+  $("#vId").value="";$("#vName").value="";$("#vSub").value="";
+  persist();renderVlans();renderForm();renderDiagram();
+  setStatus(tr("st.vlanAdded",{id:id}));
+  idEl.focus();
+});
+$("#vlans").addEventListener("input",function(e){
+  var t=e.target,id=t.dataset.vid,k=t.dataset.vk;
+  if(!id||!k)return;
+  var v=net().vlans.find(function(x){return x.id===id});
+  if(!v)return;
+  mark("v:"+id+":"+k);
+  v[k]=t.value;
+  persist();renderDiagram();renderForm();
+});
+
+/* drag nodes (mouse and pen); touch taps select */
+svg.addEventListener("pointerdown",function(e){
+  var g=e.target.closest(".node");
+  if(!g){if(selectedId)select(null);return}
+  if(e.pointerType==="mouse"&&e.button!==0)return;
+  var id=g.dataset.id,p=lastLayout.pos[id];
+  if(!p||!dev(id))return;
+  if(selectedId!==id)select(id);
+  if(e.pointerType==="touch")return;
+  drag={id:id,sx:e.clientX,sy:e.clientY,ox:p.x,oy:p.y,moved:false,pid:e.pointerId};
+  svg.setPointerCapture(e.pointerId);
+});
+svg.addEventListener("pointermove",function(e){
+  if(!drag||e.pointerId!==drag.pid)return;
+  var dx=e.clientX-drag.sx,dy=e.clientY-drag.sy;
+  if(!drag.moved){
+    if(Math.hypot(dx,dy)<4)return;
+    drag.moved=true;mark(null);frozenB=Object.assign({},lastLayout.bounds);
+  }
+  var d=dev(drag.id),fb=frozenB;
+  if(!d)return;
+  d.x=Math.round(clamp(drag.ox+dx/zoom,fb.x,fb.x+fb.w-W));
+  d.y=Math.round(clamp(drag.oy+dy/zoom,fb.y,fb.y+fb.h-H));
+  if(!raf)raf=requestAnimationFrame(function(){raf=0;renderDiagram()});
+});
+function endDrag(e){
+  if(!drag||e.pointerId!==drag.pid)return;
+  var moved=drag.moved;
+  try{svg.releasePointerCapture(drag.pid)}catch(err){}
+  drag=null;frozenB=null;
+  if(moved){persist();renderDiagram()}
+}
+svg.addEventListener("pointerup",endDrag);
+svg.addEventListener("pointercancel",endDrag);
+svg.addEventListener("keydown",function(e){
+  var g=e.target.closest&&e.target.closest(".node");
+  if(g&&(e.key==="Enter"||e.key===" ")){e.preventDefault();select(g.dataset.id,{refocus:true})}
+});
+
+document.addEventListener("keydown",function(e){
+  if(!(e.ctrlKey||e.metaKey)||e.altKey)return;
+  var el=e.target,tag=el&&el.tagName,k=String(e.key).toLowerCase();
+  if(tag==="INPUT"||tag==="TEXTAREA"||tag==="SELECT"||(el&&el.isContentEditable))return;
+  if(k==="z"&&!e.shiftKey){e.preventDefault();undo()}
+  else if((k==="z"&&e.shiftKey)||k==="y"){e.preventDefault();redo()}
+});
+
+$("#fbCopy").addEventListener("click",function(){
+  var ta=$("#fbText");ta.select();
+  try{
+    if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(ta.value);
+    else document.execCommand("copy");
+  }catch(err){}
+});
+
+/* ---------- boot ---------- */
+function applyStatic(){
+  var de=document.documentElement;
+  de.lang=lang;de.dir=lang==="ar"?"rtl":"ltr";
+  document.title=tr("app.title");
+  document.querySelectorAll("[data-i18n]").forEach(function(el){el.textContent=tr(el.dataset.i18n)});
+  document.querySelectorAll("[data-i18n-ph]").forEach(function(el){el.placeholder=tr(el.dataset.i18nPh)});
+  document.querySelectorAll("[data-i18n-aria]").forEach(function(el){el.setAttribute("aria-label",tr(el.dataset.i18nAria))});
+  document.querySelectorAll("[data-i18n-title]").forEach(function(el){el.title=tr(el.dataset.i18nTitle)});
+  document.querySelectorAll('[data-act="add"]').forEach(function(b){b.innerHTML="<i></i>"+esc(TYPES[b.dataset.type].short)});
+  $("#fbMsg").innerHTML=tr("fb.text",{name:'<code id="fbName"></code>'});
+  $("#lang").value=lang;
+}
+$("#lang").addEventListener("change",function(e){
+  lang=e.target.value;
+  try{localStorage.setItem(LKEY,lang)}catch(err){}
+  confirmNet=false;confirmDev=false;confirmVlan=null;
+  applyStatic();renderAll();
+  setStatus(tr("st.default"));
+});
+function renderAll(){renderBar();renderNets();renderDevs();renderVlans();renderForm();renderDiagram();updateHistory()}
+applyStatic();
+renderAll();
+requestAnimationFrame(fit);
+setStatus(tr("st.default"));
+})();
+</script>
+</body>
+</html>
