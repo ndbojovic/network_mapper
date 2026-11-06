@@ -11,7 +11,7 @@
 :root{
   --bg:#e6e9ed; --panel:#f6f7f9; --node:#ffffff; --soft:#dde2e8;
   --ink:#141c25; --muted:#586471; --line:#c3cad2; --link:#7b8793;
-  --mx:#0b8a6a; --sw:#2455c3; --ap:#c0560f; --cam:#8a3fb5; --prt:#b3365f; --scn:#5f7f12; --oth:#5d6b78;
+  --mx:#0b8a6a; --sw:#2455c3; --ap:#c0560f; --cam:#8a3fb5; --prt:#b3365f; --scn:#5f7f12; --oth:#5d6b78; --warn:#b45309;
   --focus:#2455c3; --danger:#b3261e; --dangerbg:#b3261e;
   --sans:"IBM Plex Sans","IBM Plex Sans Arabic",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
   --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
@@ -24,7 +24,7 @@
   :root:not([data-theme="light"]){
     --bg:#0e1318; --panel:#161c23; --node:#1d252e; --soft:#242d37;
     --ink:#e5eaef; --muted:#8e9ba8; --line:#2f3a45; --link:#6b7885;
-    --mx:#36c9a1; --sw:#7aa3ff; --ap:#f29a52; --cam:#c58cf0; --prt:#f07a9f; --scn:#a9cf55; --oth:#9aa7b4;
+    --mx:#36c9a1; --sw:#7aa3ff; --ap:#f29a52; --cam:#c58cf0; --prt:#f07a9f; --scn:#a9cf55; --oth:#9aa7b4; --warn:#fbbf24;
     --focus:#7aa3ff; --danger:#ff8f86; --dangerbg:#b3261e;
     color-scheme:dark;
   }
@@ -32,7 +32,7 @@
 :root[data-theme="dark"]{
   --bg:#0e1318; --panel:#161c23; --node:#1d252e; --soft:#242d37;
   --ink:#e5eaef; --muted:#8e9ba8; --line:#2f3a45; --link:#6b7885;
-  --mx:#36c9a1; --sw:#7aa3ff; --ap:#f29a52; --cam:#c58cf0; --prt:#f07a9f; --scn:#a9cf55; --oth:#9aa7b4;
+  --mx:#36c9a1; --sw:#7aa3ff; --ap:#f29a52; --cam:#c58cf0; --prt:#f07a9f; --scn:#a9cf55; --oth:#9aa7b4; --warn:#fbbf24;
   --focus:#7aa3ff; --danger:#ff8f86; --dangerbg:#b3261e;
   color-scheme:dark;
 }
@@ -43,8 +43,11 @@ body{background:var(--bg);color:var(--ink);font:400 14px/1.45 var(--sans)}
 h1,h2,h3,p{margin:0}
 :focus-visible{outline:2px solid var(--focus);outline-offset:2px}
 
-.app{display:grid;grid-template-columns:272px minmax(0,1fr) 332px;height:100%}
-.side,.edit{background:var(--panel);overflow:auto;min-height:0}
+.app{--lw:272px;--rw:332px;display:grid;grid-template-columns:var(--lw) minmax(0,1fr) var(--rw);height:100%;transition:grid-template-columns .18s ease}
+.app.hide-side{--lw:0px}
+.app.hide-edit{--rw:0px}
+.app.hide-side .side,.app.hide-edit .edit{visibility:hidden;overflow:hidden;padding:0;border-width:0}
+.side,.edit{background:var(--panel);overflow:auto;min-height:0;min-width:0}
 .side{border-inline-end:1px solid var(--line);padding:18px 16px;display:flex;flex-direction:column;gap:22px}
 .edit{border-inline-start:1px solid var(--line);padding:18px 16px}
 .main{display:flex;flex-direction:column;min-width:0;min-height:0}
@@ -84,7 +87,8 @@ textarea{resize:vertical}
 .bar .isp{flex:0 1 210px}
 .grp{display:flex;align-items:center;gap:6px}
 .zl{font:400 12px var(--mono);color:var(--muted);min-width:38px;text-align:center}
-.langrow{flex:1 0 100%;display:flex;justify-content:flex-end;align-items:center;gap:8px;font-size:12.5px;color:var(--muted)}
+.langrow{flex:1 0 100%;display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-size:12.5px;color:var(--muted)}
+.langrow .grow{flex:1}
 .langrow select{width:auto;padding:5px 8px}
 .status{flex:1 0 100%;font-size:12px;color:var(--muted);min-height:17px}
 
@@ -125,6 +129,37 @@ input[type=checkbox]{width:auto;padding:0;margin:0;accent-color:var(--ink)}
 .pedit h4{margin:0 0 6px;font:600 13px var(--sans)}
 .pedit p{margin:0 0 8px;font-size:12.5px}
 .pedit .chk{padding-top:0}
+.ptog{padding:5px 8px;display:inline-flex;align-items:center}
+.ptog svg{display:block}
+[dir="rtl"] .ptog svg{transform:scaleX(-1)}
+.ptog[aria-pressed="false"] .pf{display:none}
+.ptog[aria-pressed="true"]{border-color:var(--muted)}
+.addmenu{position:relative}
+.addmenu>.btn{display:inline-flex;align-items:center;gap:6px}
+.addpop{position:absolute;z-index:30;inset-inline-start:0;top:calc(100% + 6px);width:248px;padding:8px;background:var(--panel);border:1px solid var(--line);border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.22)}
+.addpop[hidden]{display:none}
+.pop-item{display:flex;align-items:center;gap:8px;width:100%;text-align:start;padding:7px 8px;border:0;border-radius:6px;background:transparent;color:var(--ink);font:500 13px var(--sans);cursor:pointer}
+.pop-item:hover{background:var(--soft)}
+.pop-item i{width:8px;height:8px;border-radius:2px;background:var(--c);flex:none}
+.qtyrow{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted);margin:0 0 10px}
+.qtyrow input{width:64px;padding:5px 7px}
+.addpop .qtyrow{margin:6px 0 0;padding:8px 8px 0;border-top:1px solid var(--line)}
+.chipwarn{color:var(--warn);border-color:var(--warn);display:inline-flex;align-items:center;gap:6px;padding:5px 9px}
+.chipwarn[hidden]{display:none}
+.acts{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:-4px 0 14px}
+.dupn{display:inline-flex;align-items:center;gap:4px;color:var(--muted)}
+.dupn input{width:58px;padding:5px 7px}
+.copyrow{display:flex;gap:6px;margin-bottom:8px}
+.copyrow select{flex:1;min-width:0}
+.warn{color:var(--warn);font-size:11.5px}
+.warn[hidden]{display:none}
+.f .nh{display:none;color:var(--muted);font-size:11.5px}
+.f:focus-within .nh{display:block}
+input[aria-invalid="true"]{border-color:var(--warn)}
+.wb{display:inline-grid;place-items:center;width:15px;height:15px;border-radius:50%;background:var(--warn);color:var(--node);font:700 10px var(--sans);flex:none}
+.dev.dim{opacity:.55}
+.tog:hover rect,.tog:hover circle+circle{stroke:var(--ink)}
+.dev .tail{display:inline-flex;align-items:center;gap:6px}
 .vrow{border:1px solid var(--line);border-radius:8px;background:var(--node);padding:8px;margin-bottom:6px}
 .vtop{display:flex;align-items:center;gap:8px;margin-bottom:6px}
 .vtop .vid{font:600 13px var(--sans);flex:1}
@@ -152,15 +187,17 @@ code{font:400 12.5px var(--mono)}
   html,body{height:auto;min-height:100%}
   .app{display:flex;flex-direction:column;height:auto;min-height:100%}
   .main{order:1;height:64vh;min-height:380px}
+  .app.hide-side .side,.app.hide-edit .edit{display:none}
+  .app.hide-side.hide-edit .main{height:90vh}
   .edit{order:2;border-inline-start:0;border-top:1px solid var(--line)}
   .side{order:3;border-inline-end:0;border-top:1px solid var(--line)}
 }
-@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}.app{transition:none}}
 </style>
 </head>
 <body>
 <div class="app">
-  <aside class="side" aria-label="Networks and devices" data-i18n-aria="aria.side">
+  <aside class="side" id="sidePanel" aria-label="Networks and devices" data-i18n-aria="aria.side">
     <header class="brand">
       <h1>Network mapper</h1>
       <p data-i18n="brand.tag">Add your gear, then save the network as a file.</p>
@@ -191,6 +228,7 @@ code{font:400 12.5px var(--mono)}
         <button class="btn" type="button" data-act="add" data-type="scanner" style="--c:var(--scn)"><i></i>Scanner</button>
         <button class="btn" type="button" data-act="add" data-type="other" style="--c:var(--oth)"><i></i>Other</button>
       </div>
+      <label class="qtyrow"><span data-i18n="add.qty">How many</span><input id="qty" type="number" min="1" max="50" value="1" class="mono" dir="ltr" aria-label="Number of devices to add" data-i18n-aria="add.qtyAria"></label>
       <div id="devs" class="list"></div>
     </section>
 
@@ -211,6 +249,23 @@ code{font:400 12.5px var(--mono)}
   <main class="main">
     <div class="bar">
       <div class="langrow">
+        <button class="btn ptog" type="button" id="togSide" data-act="tog-side" aria-pressed="true" aria-controls="sidePanel"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="15" rx="2"/><path d="M9.5 4.5v15"/><path class="pf" d="M5.7 8.5h1.6M5.7 11.5h1.6M5.7 14.5h1.6"/></svg></button>
+        <div class="addmenu">
+          <button class="btn primary" type="button" id="addBtn" data-act="add-menu" aria-haspopup="true" aria-expanded="false" aria-controls="addPop"><span data-i18n="add.btn">Add device</span><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+          <div class="addpop" id="addPop" role="group" aria-label="Add device" data-i18n-aria="add.btn" hidden>
+          <button class="pop-item" type="button" data-act="add" data-type="mx" style="--c:var(--mx)"><i></i>mx</button>
+          <button class="pop-item" type="button" data-act="add" data-type="switch" style="--c:var(--sw)"><i></i>switch</button>
+          <button class="pop-item" type="button" data-act="add" data-type="ap" style="--c:var(--ap)"><i></i>ap</button>
+          <button class="pop-item" type="button" data-act="add" data-type="camera" style="--c:var(--cam)"><i></i>camera</button>
+          <button class="pop-item" type="button" data-act="add" data-type="printer" style="--c:var(--prt)"><i></i>printer</button>
+          <button class="pop-item" type="button" data-act="add" data-type="scanner" style="--c:var(--scn)"><i></i>scanner</button>
+          <button class="pop-item" type="button" data-act="add" data-type="other" style="--c:var(--oth)"><i></i>other</button>
+            <label class="qtyrow"><span data-i18n="add.qty">How many</span><input id="qty2" type="number" min="1" max="50" value="1" class="mono" dir="ltr" aria-label="Number of devices to add" data-i18n-aria="add.qtyAria"></label>
+          </div>
+        </div>
+        <button class="btn chipwarn" type="button" id="dupChip" data-act="goto-dup" hidden></button>
+        <span class="grow"></span>
+        <button class="btn ptog" type="button" id="togFocus" data-act="tog-focus" aria-pressed="false"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
         <label for="lang" data-i18n="lang.label">Language</label>
         <select id="lang">
           <option value="en" lang="en">English</option>
@@ -218,6 +273,7 @@ code{font:400 12.5px var(--mono)}
           <option value="ar" lang="ar">العربية</option>
           <option value="es" lang="es">Español</option>
         </select>
+        <button class="btn ptog" type="button" id="togEdit" data-act="tog-edit" aria-pressed="true" aria-controls="edit"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="15" rx="2"/><path d="M14.5 4.5v15"/><path class="pf" d="M16.7 8.5h1.6M16.7 11.5h1.6M16.7 14.5h1.6"/></svg></button>
       </div>
       <input id="netName" class="title" dir="auto" aria-label="Network name" data-i18n-aria="bar.netName" maxlength="80">
       <input id="isp" class="isp" dir="auto" aria-label="Internet provider" placeholder="Internet provider (optional)" data-i18n-aria="bar.isp" data-i18n-ph="bar.isp" maxlength="60">
@@ -225,6 +281,8 @@ code{font:400 12.5px var(--mono)}
         <button class="btn" type="button" id="undoBtn" data-act="undo" title="Undo (Ctrl+Z)" data-i18n="bar.undo" data-i18n-title="bar.undoTip" disabled>Undo</button>
         <button class="btn" type="button" id="redoBtn" data-act="redo" title="Redo (Ctrl+Shift+Z)" data-i18n="bar.redo" data-i18n-title="bar.redoTip" disabled>Redo</button>
         <button class="btn" type="button" data-act="auto" title="Clear manual positions and re-run the layout" data-i18n="bar.auto" data-i18n-title="bar.autoTip">Auto-arrange</button>
+        <button class="btn" type="button" data-act="collapse-all" title="Show only the top devices" data-i18n="bar.collapseAll" data-i18n-title="bar.collapseAllTip">Collapse all</button>
+        <button class="btn" type="button" data-act="expand-all" title="Show every device" data-i18n="bar.expandAll" data-i18n-title="bar.expandAllTip">Expand all</button>
         <button class="btn" type="button" data-act="zoom-out" aria-label="Zoom out" data-i18n-aria="bar.zoomOut">&minus;</button>
         <span id="zoomLbl" class="zl">100%</span>
         <button class="btn" type="button" data-act="zoom-in" aria-label="Zoom in" data-i18n-aria="bar.zoomIn">+</button>
@@ -293,7 +351,9 @@ en:{
 "st.opened":"Opened “{name}” with {count}.","st.created":"Created “{name}”. Add your first device from the Devices section.","st.deletedNet":"Deleted “{name}”.",
 "st.vlanBadId":"A VLAN ID is a number from 1 to 4094.","st.vlanExists":"VLAN {id} already exists.","st.vlanAdded":"Added VLAN {id}. Assign it from a device’s VLAN field.","st.vlanDeleted":"Deleted VLAN {id}. Devices that used it keep the number and show it as not defined.",
 "fb.title":"Copy your network file","fb.text":"This view can’t save files directly. Copy the text below into a file named {name}.","fb.copy":"Copy text","fb.close":"Close",
-"bar.undo":"Undo","bar.redo":"Redo","bar.undoTip":"Undo (Ctrl+Z)","bar.redoTip":"Redo (Ctrl+Shift+Z)","st.undone":"Change undone.","st.redone":"Change redone.","bar.exportPng":"Export PNG","st.pngSaved":"Diagram exported as PNG.","st.pngFail":"Couldn’t create the PNG. Try Export SVG instead.","opt.unset":"Not set","f.linkSpeed":"Link speed","f.linkMedia":"Link type","media.copper":"Copper","media.fiber":"Fiber","media.wireless":"Wireless","f.lag":"Aggregated link (LAG)","f.lagCount":"Links in bundle","f.link":"Link","sec.ports":"Port map","port.noCount":"Set a port count above to see the ports.","port.used":"{used} of {n} ports in use","port.pick":"Select a port to edit it.","port.title":"Port {n}","f.portName":"Description or connected device","ph.portName":"e.g. AP-Lobby","f.portMode":"Mode","mode.access":"Access","mode.trunk":"Trunk","f.nativeVlan":"Native VLAN","f.allowed":"Allowed VLANs","ph.allowed":"10, 20, 30","f.poe":"Powered over PoE","port.linked":"Linked in diagram: {name}","port.isUplink":"This port is the uplink.","port.clear":"Clear port","sec.wireless":"Wireless networks","ssid.add":"Add SSID","ssid.namePh":"SSID name","ssid.aria.vlan":"VLAN for this SSID","ssid.aria.band":"Band","ssid.aria.sec":"Security","ssid.remove":"Remove","ssid.removeAria":"Remove SSID {n}","band.all":"All bands","sec.unset":"Security","sec.open":"Open","ssid.none":"No wireless networks yet. Add an SSID and map it to a VLAN.","f.wifi":"Wi-Fi standard"
+"bar.undo":"Undo","bar.redo":"Redo","bar.undoTip":"Undo (Ctrl+Z)","bar.redoTip":"Redo (Ctrl+Shift+Z)","st.undone":"Change undone.","st.redone":"Change redone.","bar.exportPng":"Export PNG","st.pngSaved":"Diagram exported as PNG.","st.pngFail":"Couldn’t create the PNG. Try Export SVG instead.","opt.unset":"Not set","f.linkSpeed":"Link speed","f.linkMedia":"Link type","media.copper":"Copper","media.fiber":"Fiber","media.wireless":"Wireless","f.lag":"Aggregated link (LAG)","f.lagCount":"Links in bundle","f.link":"Link","sec.ports":"Port map","port.noCount":"Set a port count above to see the ports.","port.used":"{used} of {n} ports in use","port.pick":"Select a port to edit it.","port.title":"Port {n}","f.portName":"Description or connected device","ph.portName":"e.g. AP-Lobby","f.portMode":"Mode","mode.access":"Access","mode.trunk":"Trunk","f.nativeVlan":"Native VLAN","f.allowed":"Allowed VLANs","ph.allowed":"10, 20, 30","f.poe":"Powered over PoE","port.linked":"Linked in diagram: {name}","port.isUplink":"This port is the uplink.","port.clear":"Clear port","sec.wireless":"Wireless networks","ssid.add":"Add SSID","ssid.namePh":"SSID name","ssid.aria.vlan":"VLAN for this SSID","ssid.aria.band":"Band","ssid.aria.sec":"Security","ssid.remove":"Remove","ssid.removeAria":"Remove SSID {n}","band.all":"All bands","sec.unset":"Security","sec.open":"Open","ssid.none":"No wireless networks yet. Add an SSID and map it to a VLAN.","f.wifi":"Wi-Fi standard",
+"add.btn":"Add device","add.qty":"How many","add.qtyAria":"Number of devices to add","panel.side.hide":"Hide the devices panel ([)","panel.side.show":"Show the devices panel ([)","panel.edit.hide":"Hide the details panel (])","panel.edit.show":"Show the details panel (])","panel.focus.hide":"Hide both panels","panel.focus.show":"Show both panels","dup.btn":"Duplicate","dup.tip":"Copy this device with a new name and the next free IP","dup.n":"Number of copies","st.duplicated":"Duplicated “{name}”. New devices: {n}.","st.added":"Devices added: {n}.","name.enter":"Press Enter to add another like this one","copy.btn":"Copy","copy.portsPh":"Copy port map from…","copy.portsAria":"Copy the port map from another switch","copy.ssidsPh":"Copy wireless networks from…","copy.ssidsAria":"Copy wireless networks from another access point","copy.choose":"Choose a device to copy from.","st.copiedPorts":"Copied port settings from “{name}”.","st.copiedSsids":"Copied wireless networks from “{name}”.","warn.name":"Same name as {names}","warn.ip":"Same IP address as {names}","warn.mac":"Same MAC address as {names}","warn.serial":"Same serial number as {names}","warn.chipTip":"Devices with duplicate values: {n}. Click to review.",
+"bar.collapseAll":"Collapse all","bar.expandAll":"Expand all","bar.collapseAllTip":"Show only the top devices. Click a +N badge to open a branch.","bar.expandAllTip":"Show every device","tog.collapseBelow":"Collapse devices below","tog.expandBelow":"Expand devices below","tog.hide":"Hide the devices below","tog.show":"Hidden devices: {n}. Click to show them.","tog.warnHidden":"A hidden device has a duplicate warning."
 },
 fr:{
 "app.title":"Cartographe réseau","brand.tag":"Ajoutez vos équipements, puis enregistrez le réseau dans un fichier.","lang.label":"Langue",
@@ -322,7 +382,9 @@ fr:{
 "st.opened":"Réseau « {name} » ouvert : {count}.","st.created":"Réseau « {name} » créé. Ajoutez votre premier équipement depuis la section Équipements.","st.deletedNet":"Réseau « {name} » supprimé.",
 "st.vlanBadId":"Un ID de VLAN est un nombre de 1 à 4094.","st.vlanExists":"Le VLAN {id} existe déjà.","st.vlanAdded":"VLAN {id} ajouté. Affectez-le depuis le champ VLAN d’un équipement.","st.vlanDeleted":"VLAN {id} supprimé. Les équipements qui l’utilisaient gardent le numéro et l’affichent comme non défini.",
 "fb.title":"Copiez votre fichier réseau","fb.text":"Cette vue ne peut pas enregistrer de fichiers directement. Copiez le texte ci-dessous dans un fichier nommé {name}.","fb.copy":"Copier le texte","fb.close":"Fermer",
-"bar.undo":"Annuler","bar.redo":"Rétablir","bar.undoTip":"Annuler (Ctrl+Z)","bar.redoTip":"Rétablir (Ctrl+Maj+Z)","st.undone":"Modification annulée.","st.redone":"Modification rétablie.","bar.exportPng":"Exporter en PNG","st.pngSaved":"Schéma exporté en PNG.","st.pngFail":"Impossible de créer le PNG. Essayez plutôt l’export SVG.","opt.unset":"Non défini","f.linkSpeed":"Débit du lien","f.linkMedia":"Type de lien","media.copper":"Cuivre","media.fiber":"Fibre","media.wireless":"Sans fil","f.lag":"Lien agrégé (LAG)","f.lagCount":"Liens dans l’agrégat","f.link":"Lien","sec.ports":"Plan des ports","port.noCount":"Indiquez un nombre de ports ci-dessus pour afficher les ports.","port.used":"{used} ports utilisés sur {n}","port.pick":"Sélectionnez un port pour le modifier.","port.title":"Port {n}","f.portName":"Description ou équipement raccordé","ph.portName":"ex. AP-Lobby","f.portMode":"Mode","mode.access":"Accès","mode.trunk":"Trunk","f.nativeVlan":"VLAN natif","f.allowed":"VLAN autorisés","ph.allowed":"10, 20, 30","f.poe":"Alimenté en PoE","port.linked":"Lié dans le schéma : {name}","port.isUplink":"Ce port est le lien amont.","port.clear":"Réinitialiser le port","sec.wireless":"Réseaux sans fil","ssid.add":"Ajouter un SSID","ssid.namePh":"Nom du SSID","ssid.aria.vlan":"VLAN de ce SSID","ssid.aria.band":"Bande","ssid.aria.sec":"Sécurité","ssid.remove":"Retirer","ssid.removeAria":"Retirer le SSID {n}","band.all":"Toutes les bandes","sec.unset":"Sécurité","sec.open":"Ouvert","ssid.none":"Aucun réseau sans fil pour l’instant. Ajoutez un SSID et associez-le à un VLAN.","f.wifi":"Norme Wi-Fi"
+"bar.undo":"Annuler","bar.redo":"Rétablir","bar.undoTip":"Annuler (Ctrl+Z)","bar.redoTip":"Rétablir (Ctrl+Maj+Z)","st.undone":"Modification annulée.","st.redone":"Modification rétablie.","bar.exportPng":"Exporter en PNG","st.pngSaved":"Schéma exporté en PNG.","st.pngFail":"Impossible de créer le PNG. Essayez plutôt l’export SVG.","opt.unset":"Non défini","f.linkSpeed":"Débit du lien","f.linkMedia":"Type de lien","media.copper":"Cuivre","media.fiber":"Fibre","media.wireless":"Sans fil","f.lag":"Lien agrégé (LAG)","f.lagCount":"Liens dans l’agrégat","f.link":"Lien","sec.ports":"Plan des ports","port.noCount":"Indiquez un nombre de ports ci-dessus pour afficher les ports.","port.used":"{used} ports utilisés sur {n}","port.pick":"Sélectionnez un port pour le modifier.","port.title":"Port {n}","f.portName":"Description ou équipement raccordé","ph.portName":"ex. AP-Lobby","f.portMode":"Mode","mode.access":"Accès","mode.trunk":"Trunk","f.nativeVlan":"VLAN natif","f.allowed":"VLAN autorisés","ph.allowed":"10, 20, 30","f.poe":"Alimenté en PoE","port.linked":"Lié dans le schéma : {name}","port.isUplink":"Ce port est le lien amont.","port.clear":"Réinitialiser le port","sec.wireless":"Réseaux sans fil","ssid.add":"Ajouter un SSID","ssid.namePh":"Nom du SSID","ssid.aria.vlan":"VLAN de ce SSID","ssid.aria.band":"Bande","ssid.aria.sec":"Sécurité","ssid.remove":"Retirer","ssid.removeAria":"Retirer le SSID {n}","band.all":"Toutes les bandes","sec.unset":"Sécurité","sec.open":"Ouvert","ssid.none":"Aucun réseau sans fil pour l’instant. Ajoutez un SSID et associez-le à un VLAN.","f.wifi":"Norme Wi-Fi",
+"add.btn":"Ajouter un équipement","add.qty":"Quantité","add.qtyAria":"Nombre d’équipements à ajouter","panel.side.hide":"Masquer le panneau des équipements ([)","panel.side.show":"Afficher le panneau des équipements ([)","panel.edit.hide":"Masquer le panneau de détails (])","panel.edit.show":"Afficher le panneau de détails (])","panel.focus.hide":"Masquer les deux panneaux","panel.focus.show":"Afficher les deux panneaux","dup.btn":"Dupliquer","dup.tip":"Copie cet équipement avec un nouveau nom et la prochaine IP libre","dup.n":"Nombre de copies","st.duplicated":"« {name} » dupliqué. Nouveaux équipements : {n}.","st.added":"Équipements ajoutés : {n}.","name.enter":"Appuyez sur Entrée pour en ajouter un autre identique","copy.btn":"Copier","copy.portsPh":"Copier le plan des ports de…","copy.portsAria":"Copier le plan des ports d’un autre switch","copy.ssidsPh":"Copier les réseaux sans fil de…","copy.ssidsAria":"Copier les réseaux sans fil d’une autre borne","copy.choose":"Choisissez l’équipement source.","st.copiedPorts":"Paramètres des ports copiés depuis « {name} ».","st.copiedSsids":"Réseaux sans fil copiés depuis « {name} ».","warn.name":"Même nom que {names}","warn.ip":"Même adresse IP que {names}","warn.mac":"Même adresse MAC que {names}","warn.serial":"Même numéro de série que {names}","warn.chipTip":"Équipements avec des valeurs en double : {n}. Cliquez pour examiner.",
+"bar.collapseAll":"Tout réduire","bar.expandAll":"Tout développer","bar.collapseAllTip":"Affiche uniquement les équipements du haut. Cliquez sur un badge +N pour ouvrir une branche.","bar.expandAllTip":"Affiche tous les équipements","tog.collapseBelow":"Réduire les équipements en dessous","tog.expandBelow":"Développer les équipements en dessous","tog.hide":"Masquer les équipements en dessous","tog.show":"Équipements masqués : {n}. Cliquez pour les afficher.","tog.warnHidden":"Un équipement masqué a un avertissement de doublon."
 },
 es:{
 "app.title":"Mapa de red","brand.tag":"Añade tus equipos y guarda la red en un archivo.","lang.label":"Idioma",
@@ -351,7 +413,9 @@ es:{
 "st.opened":"Se abrió «{name}» con {count}.","st.created":"Se creó «{name}». Añade tu primer dispositivo desde la sección Dispositivos.","st.deletedNet":"Se eliminó «{name}».",
 "st.vlanBadId":"Un ID de VLAN es un número del 1 al 4094.","st.vlanExists":"La VLAN {id} ya existe.","st.vlanAdded":"Se añadió la VLAN {id}. Asígnala desde el campo VLAN de un dispositivo.","st.vlanDeleted":"Se eliminó la VLAN {id}. Los dispositivos que la usaban conservan el número y la muestran como no definida.",
 "fb.title":"Copia tu archivo de red","fb.text":"Esta vista no puede guardar archivos directamente. Copia el texto de abajo en un archivo llamado {name}.","fb.copy":"Copiar texto","fb.close":"Cerrar",
-"bar.undo":"Deshacer","bar.redo":"Rehacer","bar.undoTip":"Deshacer (Ctrl+Z)","bar.redoTip":"Rehacer (Ctrl+Mayús+Z)","st.undone":"Cambio deshecho.","st.redone":"Cambio rehecho.","bar.exportPng":"Exportar PNG","st.pngSaved":"Diagrama exportado como PNG.","st.pngFail":"No se pudo crear el PNG. Prueba a exportar como SVG.","opt.unset":"Sin definir","f.linkSpeed":"Velocidad del enlace","f.linkMedia":"Tipo de enlace","media.copper":"Cobre","media.fiber":"Fibra","media.wireless":"Inalámbrico","f.lag":"Enlace agregado (LAG)","f.lagCount":"Enlaces en el grupo","f.link":"Enlace","sec.ports":"Mapa de puertos","port.noCount":"Indica un número de puertos arriba para ver los puertos.","port.used":"{used} de {n} puertos en uso","port.pick":"Selecciona un puerto para editarlo.","port.title":"Puerto {n}","f.portName":"Descripción o dispositivo conectado","ph.portName":"p. ej. AP-Lobby","f.portMode":"Modo","mode.access":"Acceso","mode.trunk":"Troncal","f.nativeVlan":"VLAN nativa","f.allowed":"VLAN permitidas","ph.allowed":"10, 20, 30","f.poe":"Alimentado por PoE","port.linked":"Enlazado en el diagrama: {name}","port.isUplink":"Este puerto es el enlace superior.","port.clear":"Borrar puerto","sec.wireless":"Redes inalámbricas","ssid.add":"Añadir SSID","ssid.namePh":"Nombre del SSID","ssid.aria.vlan":"VLAN de este SSID","ssid.aria.band":"Banda","ssid.aria.sec":"Seguridad","ssid.remove":"Quitar","ssid.removeAria":"Quitar el SSID {n}","band.all":"Todas las bandas","sec.unset":"Seguridad","sec.open":"Abierta","ssid.none":"Aún no hay redes inalámbricas. Añade un SSID y asígnalo a una VLAN.","f.wifi":"Estándar Wi-Fi"
+"bar.undo":"Deshacer","bar.redo":"Rehacer","bar.undoTip":"Deshacer (Ctrl+Z)","bar.redoTip":"Rehacer (Ctrl+Mayús+Z)","st.undone":"Cambio deshecho.","st.redone":"Cambio rehecho.","bar.exportPng":"Exportar PNG","st.pngSaved":"Diagrama exportado como PNG.","st.pngFail":"No se pudo crear el PNG. Prueba a exportar como SVG.","opt.unset":"Sin definir","f.linkSpeed":"Velocidad del enlace","f.linkMedia":"Tipo de enlace","media.copper":"Cobre","media.fiber":"Fibra","media.wireless":"Inalámbrico","f.lag":"Enlace agregado (LAG)","f.lagCount":"Enlaces en el grupo","f.link":"Enlace","sec.ports":"Mapa de puertos","port.noCount":"Indica un número de puertos arriba para ver los puertos.","port.used":"{used} de {n} puertos en uso","port.pick":"Selecciona un puerto para editarlo.","port.title":"Puerto {n}","f.portName":"Descripción o dispositivo conectado","ph.portName":"p. ej. AP-Lobby","f.portMode":"Modo","mode.access":"Acceso","mode.trunk":"Troncal","f.nativeVlan":"VLAN nativa","f.allowed":"VLAN permitidas","ph.allowed":"10, 20, 30","f.poe":"Alimentado por PoE","port.linked":"Enlazado en el diagrama: {name}","port.isUplink":"Este puerto es el enlace superior.","port.clear":"Borrar puerto","sec.wireless":"Redes inalámbricas","ssid.add":"Añadir SSID","ssid.namePh":"Nombre del SSID","ssid.aria.vlan":"VLAN de este SSID","ssid.aria.band":"Banda","ssid.aria.sec":"Seguridad","ssid.remove":"Quitar","ssid.removeAria":"Quitar el SSID {n}","band.all":"Todas las bandas","sec.unset":"Seguridad","sec.open":"Abierta","ssid.none":"Aún no hay redes inalámbricas. Añade un SSID y asígnalo a una VLAN.","f.wifi":"Estándar Wi-Fi",
+"add.btn":"Añadir dispositivo","add.qty":"Cantidad","add.qtyAria":"Número de dispositivos que añadir","panel.side.hide":"Ocultar el panel de dispositivos ([)","panel.side.show":"Mostrar el panel de dispositivos ([)","panel.edit.hide":"Ocultar el panel de detalles (])","panel.edit.show":"Mostrar el panel de detalles (])","panel.focus.hide":"Ocultar ambos paneles","panel.focus.show":"Mostrar ambos paneles","dup.btn":"Duplicar","dup.tip":"Copia este dispositivo con un nombre nuevo y la siguiente IP libre","dup.n":"Número de copias","st.duplicated":"Se duplicó «{name}». Dispositivos nuevos: {n}.","st.added":"Dispositivos añadidos: {n}.","name.enter":"Pulsa Intro para añadir otro igual","copy.btn":"Copiar","copy.portsPh":"Copiar el mapa de puertos de…","copy.portsAria":"Copiar el mapa de puertos de otro switch","copy.ssidsPh":"Copiar las redes inalámbricas de…","copy.ssidsAria":"Copiar las redes inalámbricas de otro punto de acceso","copy.choose":"Elige el dispositivo de origen.","st.copiedPorts":"Se copió la configuración de puertos de «{name}».","st.copiedSsids":"Se copiaron las redes inalámbricas de «{name}».","warn.name":"Mismo nombre que {names}","warn.ip":"Misma dirección IP que {names}","warn.mac":"Misma dirección MAC que {names}","warn.serial":"Mismo número de serie que {names}","warn.chipTip":"Dispositivos con valores duplicados: {n}. Haz clic para revisarlos.",
+"bar.collapseAll":"Contraer todo","bar.expandAll":"Expandir todo","bar.collapseAllTip":"Muestra solo los dispositivos superiores. Haz clic en una insignia +N para abrir una rama.","bar.expandAllTip":"Muestra todos los dispositivos","tog.collapseBelow":"Contraer los dispositivos de abajo","tog.expandBelow":"Expandir los dispositivos de abajo","tog.hide":"Ocultar los dispositivos de abajo","tog.show":"Dispositivos ocultos: {n}. Haz clic para mostrarlos.","tog.warnHidden":"Un dispositivo oculto tiene una advertencia de duplicado."
 },
 ar:{
 "app.title":"مخطط الشبكة","brand.tag":"أضف أجهزتك ثم احفظ الشبكة في ملف.","lang.label":"اللغة",
@@ -380,7 +444,9 @@ ar:{
 "st.opened":"تم فتح «{name}» وفيه {count}.","st.created":"تم إنشاء «{name}». أضف أول جهاز من قسم الأجهزة.","st.deletedNet":"تم حذف «{name}».",
 "st.vlanBadId":"معرّف VLAN هو رقم من 1 إلى 4094.","st.vlanExists":"شبكة VLAN {id} موجودة بالفعل.","st.vlanAdded":"تمت إضافة VLAN {id}. عيّنها من حقل VLAN في أي جهاز.","st.vlanDeleted":"تم حذف VLAN {id}. تحتفظ الأجهزة التي كانت تستخدمها بالرقم وتعرضه كغير معرّف.",
 "fb.title":"انسخ ملف الشبكة","fb.text":"لا يمكن لهذا العرض حفظ الملفات مباشرة. انسخ النص أدناه إلى ملف باسم {name}.","fb.copy":"نسخ النص","fb.close":"إغلاق",
-"bar.undo":"تراجع","bar.redo":"إعادة","bar.undoTip":"تراجع (Ctrl+Z)","bar.redoTip":"إعادة (Ctrl+Shift+Z)","st.undone":"تم التراجع عن التغيير.","st.redone":"تمت إعادة التغيير.","bar.exportPng":"تصدير PNG","st.pngSaved":"تم تصدير المخطط بصيغة PNG.","st.pngFail":"تعذّر إنشاء ملف PNG. جرّب تصدير SVG بدلًا من ذلك.","opt.unset":"غير محدد","f.linkSpeed":"سرعة الوصلة","f.linkMedia":"نوع الوصلة","media.copper":"نحاس","media.fiber":"ألياف ضوئية","media.wireless":"لاسلكي","f.lag":"وصلة مجمّعة (LAG)","f.lagCount":"عدد الوصلات في المجموعة","f.link":"الوصلة","sec.ports":"خريطة المنافذ","port.noCount":"حدّد عدد المنافذ أعلاه لعرض المنافذ.","port.used":"{used} من {n} منفذًا قيد الاستخدام","port.pick":"اختر منفذًا لتعديله.","port.title":"المنفذ {n}","f.portName":"الوصف أو الجهاز المتصل","ph.portName":"مثال: AP-Lobby","f.portMode":"الوضع","mode.access":"وصول","mode.trunk":"ترنك","f.nativeVlan":"شبكة VLAN الأصلية","f.allowed":"شبكات VLAN المسموحة","ph.allowed":"10, 20, 30","f.poe":"مزوّد بالطاقة عبر PoE","port.linked":"مرتبط في المخطط: {name}","port.isUplink":"هذا المنفذ هو الوصلة العلوية.","port.clear":"مسح المنفذ","sec.wireless":"الشبكات اللاسلكية","ssid.add":"إضافة SSID","ssid.namePh":"اسم SSID","ssid.aria.vlan":"شبكة VLAN لهذا SSID","ssid.aria.band":"النطاق","ssid.aria.sec":"الأمان","ssid.remove":"إزالة","ssid.removeAria":"إزالة SSID رقم {n}","band.all":"كل النطاقات","sec.unset":"الأمان","sec.open":"مفتوحة","ssid.none":"لا توجد شبكات لاسلكية بعد. أضف SSID واربطه بشبكة VLAN.","f.wifi":"معيار Wi-Fi"
+"bar.undo":"تراجع","bar.redo":"إعادة","bar.undoTip":"تراجع (Ctrl+Z)","bar.redoTip":"إعادة (Ctrl+Shift+Z)","st.undone":"تم التراجع عن التغيير.","st.redone":"تمت إعادة التغيير.","bar.exportPng":"تصدير PNG","st.pngSaved":"تم تصدير المخطط بصيغة PNG.","st.pngFail":"تعذّر إنشاء ملف PNG. جرّب تصدير SVG بدلًا من ذلك.","opt.unset":"غير محدد","f.linkSpeed":"سرعة الوصلة","f.linkMedia":"نوع الوصلة","media.copper":"نحاس","media.fiber":"ألياف ضوئية","media.wireless":"لاسلكي","f.lag":"وصلة مجمّعة (LAG)","f.lagCount":"عدد الوصلات في المجموعة","f.link":"الوصلة","sec.ports":"خريطة المنافذ","port.noCount":"حدّد عدد المنافذ أعلاه لعرض المنافذ.","port.used":"{used} من {n} منفذًا قيد الاستخدام","port.pick":"اختر منفذًا لتعديله.","port.title":"المنفذ {n}","f.portName":"الوصف أو الجهاز المتصل","ph.portName":"مثال: AP-Lobby","f.portMode":"الوضع","mode.access":"وصول","mode.trunk":"ترنك","f.nativeVlan":"شبكة VLAN الأصلية","f.allowed":"شبكات VLAN المسموحة","ph.allowed":"10, 20, 30","f.poe":"مزوّد بالطاقة عبر PoE","port.linked":"مرتبط في المخطط: {name}","port.isUplink":"هذا المنفذ هو الوصلة العلوية.","port.clear":"مسح المنفذ","sec.wireless":"الشبكات اللاسلكية","ssid.add":"إضافة SSID","ssid.namePh":"اسم SSID","ssid.aria.vlan":"شبكة VLAN لهذا SSID","ssid.aria.band":"النطاق","ssid.aria.sec":"الأمان","ssid.remove":"إزالة","ssid.removeAria":"إزالة SSID رقم {n}","band.all":"كل النطاقات","sec.unset":"الأمان","sec.open":"مفتوحة","ssid.none":"لا توجد شبكات لاسلكية بعد. أضف SSID واربطه بشبكة VLAN.","f.wifi":"معيار Wi-Fi",
+"add.btn":"إضافة جهاز","add.qty":"العدد","add.qtyAria":"عدد الأجهزة المراد إضافتها","panel.side.hide":"إخفاء لوحة الأجهزة ([)","panel.side.show":"إظهار لوحة الأجهزة ([)","panel.edit.hide":"إخفاء لوحة التفاصيل (])","panel.edit.show":"إظهار لوحة التفاصيل (])","panel.focus.hide":"إخفاء اللوحتين","panel.focus.show":"إظهار اللوحتين","dup.btn":"تكرار","dup.tip":"ينسخ هذا الجهاز باسم جديد وعنوان IP التالي المتاح","dup.n":"عدد النسخ","st.duplicated":"تم تكرار «{name}». أجهزة جديدة: {n}.","st.added":"الأجهزة المضافة: {n}.","name.enter":"اضغط Enter لإضافة جهاز آخر مماثل","copy.btn":"نسخ","copy.portsPh":"نسخ خريطة المنافذ من…","copy.portsAria":"نسخ خريطة المنافذ من سويتش آخر","copy.ssidsPh":"نسخ الشبكات اللاسلكية من…","copy.ssidsAria":"نسخ الشبكات اللاسلكية من نقطة وصول أخرى","copy.choose":"اختر الجهاز المراد النسخ منه.","st.copiedPorts":"تم نسخ إعدادات المنافذ من «{name}».","st.copiedSsids":"تم نسخ الشبكات اللاسلكية من «{name}».","warn.name":"نفس الاسم المستخدم في {names}","warn.ip":"نفس عنوان IP المستخدم في {names}","warn.mac":"نفس عنوان MAC المستخدم في {names}","warn.serial":"نفس الرقم التسلسلي المستخدم في {names}","warn.chipTip":"أجهزة بها قيم مكررة: {n}. انقر للمراجعة.",
+"bar.collapseAll":"طيّ الكل","bar.expandAll":"توسيع الكل","bar.collapseAllTip":"يعرض الأجهزة العليا فقط. انقر على شارة +N لفتح فرع.","bar.expandAllTip":"يعرض كل الأجهزة","tog.collapseBelow":"طيّ الأجهزة الموجودة أسفله","tog.expandBelow":"توسيع الأجهزة الموجودة أسفله","tog.hide":"إخفاء الأجهزة الموجودة أسفله","tog.show":"أجهزة مخفية: {n}. انقر لإظهارها.","tog.warnHidden":"جهاز مخفي به تحذير تكرار."
 }
 };
 var lang=(function(){
@@ -484,7 +550,7 @@ function sample(){
   var scn=blank("scanner",{name:"SCN-Records",model:"Document scanner",ip:"10.0.40.6",vlan:"40",location:"Records room",hostname:"SCAN-RECORDS",kind:"Document",uplinkId:f2.id,parentPort:"Port 11",uplinkPort:"LAN",linkSpeed:"1G",linkMedia:"copper"});
   return {id:uid(),name:"Sample office",isp:"Example ISP",
     vlans:[{id:"1",name:"Management",subnet:"10.0.0.0/24",color:"#2b7de9"},{id:"10",name:"Staff",subnet:"10.0.10.0/24",color:"#e0742b"},{id:"20",name:"Guest",subnet:"10.0.20.0/24",color:"#1f9d6b"},{id:"30",name:"Cameras",subnet:"10.0.30.0/24",color:"#a24bd1"},{id:"40",name:"Printers",subnet:"10.0.40.0/24",color:"#d6457a"}],
-    devices:[mx,core,f2,a1,a2,a3,cam,prn,scn]};
+    devices:[mx,core,f2,a1,a2,a3,cam,prn,scn],collapsed:[]};
 }
 
 function digitsOrEmpty(v){v=String(v==null?"":v);return /^\d{1,4}$/.test(v)?v:""}
@@ -547,7 +613,9 @@ function sanitizeNet(o){
     Object.keys(d.portMap).forEach(function(k){addVlanId(d.portMap[k].vlan)});
   });
   vlans.sort(function(a,b){return a.id-b.id});
-  return {id:uid(),name:String(o.name||"Imported network").slice(0,80),isp:String(o.isp||"").slice(0,60),vlans:vlans,devices:devices};
+  var devIds={};devices.forEach(function(d){devIds[d.id]=1});
+  var collapsed=(Array.isArray(o.collapsed)?o.collapsed:[]).map(String).filter(function(id){return devIds[id]}).slice(0,500);
+  return {id:uid(),name:String(o.name||"Imported network").slice(0,80),isp:String(o.isp||"").slice(0,60),vlans:vlans,devices:devices,collapsed:collapsed};
 }
 
 function load(){
@@ -580,13 +648,14 @@ function persist(quiet){
     try{
       localStorage.setItem(KEY,JSON.stringify(store));
       var now=new Date();
-      if(!quiet)setStatus(tr("st.autosaved",{time:String(now.getHours()).padStart(2,"0")+":"+String(now.getMinutes()).padStart(2,"0")}));
+      if(!quiet&&Date.now()-msgT>4000)setStatus(tr("st.autosaved",{time:String(now.getHours()).padStart(2,"0")+":"+String(now.getMinutes()).padStart(2,"0")}),true);
     }catch(e){
       setStatus(tr("st.saveFail"));
     }
   },200);
 }
-function setStatus(t){$("#status").textContent=t}
+var msgT=0;
+function setStatus(t,auto){$("#status").textContent=t;if(!auto)msgT=Date.now()}
 
 /* ---------- undo / redo ---------- */
 var undoStack=[],redoStack=[],lastKey=null,lastT=0;
@@ -606,8 +675,12 @@ function mark(key){
   updateHistory();
 }
 function restore(str){
-  var before=store.networks.map(function(n){return n.id});
+  var before=store.networks.map(function(n){return n.id}),prev=store.networks;
   store.networks=JSON.parse(str);
+  store.networks.forEach(function(nn){
+    var o=prev.find(function(x){return x.id===nn.id});
+    nn.collapsed=o?(o.collapsed||[]).filter(function(id){return nn.devices.some(function(d){return d.id===id})}):[];
+  });
   var ids=store.networks.map(function(n){return n.id});
   var added=ids.filter(function(i){return before.indexOf(i)<0})[0];
   if(added)store.activeId=added;
@@ -650,9 +723,24 @@ function layout(n){
       seen.add(p);p=parent[p];
     }
   });
+  var kidsAll={};kidsAll[ROOT]=[];
+  devs.forEach(function(d){kidsAll[d.id]=[]});
+  devs.forEach(function(d){kidsAll[parent[d.id]].push(d)});
+  var descMemo={};
+  function descIds(id){
+    if(descMemo[id])return descMemo[id];
+    var out=[];
+    kidsAll[id].forEach(function(k){out.push(k.id);descIds(k.id).forEach(function(x){out.push(x)})});
+    return descMemo[id]=out;
+  }
+  var childCount={},descCount={},collapsedSet={},hidden={};
+  devs.forEach(function(d){childCount[d.id]=kidsAll[d.id].length;descCount[d.id]=descIds(d.id).length});
+  (n.collapsed||[]).forEach(function(id){
+    if(ids.has(id)&&childCount[id]>0){collapsedSet[id]=true;descIds(id).forEach(function(x){hidden[x]=true})}
+  });
   var kids={};kids[ROOT]=[];
   devs.forEach(function(d){kids[d.id]=[]});
-  devs.forEach(function(d){kids[parent[d.id]].push(d)});
+  devs.forEach(function(d){if(!hidden[d.id])kids[parent[d.id]].push(d)});
   var memo={};
   function span(id){var ks=kids[id];return ks.reduce(function(s,k){return s+wid(k.id)},0)+Math.max(0,ks.length-1)*GX}
   function wid(id){if(memo[id]!=null)return memo[id];return memo[id]=Math.max(W,span(id))}
@@ -665,15 +753,18 @@ function layout(n){
   }
   place(ROOT,0,0);
   var pos={};pos[ROOT]=auto[ROOT];
-  devs.forEach(function(d){var a=auto[d.id];pos[d.id]={x:Number.isFinite(d.x)?d.x:a.x,y:Number.isFinite(d.y)?d.y:a.y}});
+  devs.forEach(function(d){
+    if(hidden[d.id])return;
+    var a=auto[d.id];pos[d.id]={x:Number.isFinite(d.x)?d.x:a.x,y:Number.isFinite(d.y)?d.y:a.y};
+  });
   var x0=Infinity,y0=Infinity,x1=-Infinity,y1=-Infinity;
   function add(p,w,h){x0=Math.min(x0,p.x);y0=Math.min(y0,p.y);x1=Math.max(x1,p.x+w);y1=Math.max(y1,p.y+h)}
   add(pos[ROOT],W,IH);
-  devs.forEach(function(d){add(pos[d.id],W,H)});
+  devs.forEach(function(d){if(!hidden[d.id])add(pos[d.id],W,H)});
   var bx=x0-PAD,by=y0-PAD,bw=x1-x0+PAD*2,bh=y1-y0+PAD*2;
   if(bw<460){bx-=(460-bw)/2;bw=460}
   if(bh<280)bh=280;
-  return {pos:pos,parent:parent,bounds:{x:bx,y:by,w:bw,h:bh}};
+  return {pos:pos,parent:parent,bounds:{x:bx,y:by,w:bw,h:bh},hidden:hidden,childCount:childCount,descCount:descCount,collapsedSet:collapsedSet,descIds:descIds};
 }
 
 /* ---------- diagram markup ---------- */
@@ -691,7 +782,24 @@ function linkText(d){
   return parts.join(" ");
 }
 
-function nodeMarkup(d,p,sel,vmap){
+function togMarkup(id,tg){
+  var cx=W/2,cy=H,tip;
+  if(tg.collapsed){
+    var label="+"+tg.count,w=Math.max(32,label.length*7+14);
+    tip=tr("tog.show",{n:tg.count})+(tg.warn?"\n"+tr("tog.warnHidden"):"");
+    return '<g class="tog" data-tog="'+id+'" role="button" aria-label="'+esc(tip)+'" style="cursor:pointer"><title>'+esc(tip)+'</title>'+
+      '<rect x="'+(cx-w/2)+'" y="'+(cy-10)+'" width="'+w+'" height="20" rx="10" style="fill:var(--node);stroke:var(--ink);stroke-width:1.5"/>'+
+      '<text x="'+cx+'" y="'+(cy+4)+'" text-anchor="middle" style="font:600 11px var(--mono);fill:var(--ink)">'+label+'</text>'+
+      (tg.warn?'<circle cx="'+(cx+w/2-1)+'" cy="'+(cy-9)+'" r="4.5" style="fill:var(--warn);stroke:var(--node);stroke-width:1.5"/>':"")+'</g>';
+  }
+  tip=tr("tog.hide");
+  return '<g class="tog" data-tog="'+id+'" role="button" aria-label="'+esc(tip)+'" style="cursor:pointer"><title>'+esc(tip)+'</title>'+
+    '<circle cx="'+cx+'" cy="'+cy+'" r="14" style="fill:transparent"/>'+
+    '<circle cx="'+cx+'" cy="'+cy+'" r="8.5" style="fill:var(--node);stroke:var(--muted);stroke-width:1.5"/>'+
+    '<path d="M'+(cx-3.5)+' '+cy+'h7" style="fill:none;stroke:var(--ink);stroke-width:1.8;stroke-linecap:round"/></g>';
+}
+
+function nodeMarkup(d,p,sel,vmap,dw,ex){
   var T=TYPES[d.type]||TYPES.other,c="var("+T.v+")",v=d.vlan?vmap[d.vlan]:null;
   var tip=[(d.name||tr("unnamed"))+" ("+T.label+")"];
   [["f.model","model"],["f.serial","serial"],["f.ip","ip"],["f.mac","mac"],["f.location","location"]].forEach(function(r){if(d[r[1]])tip.push(tr(r[0])+": "+d[r[1]])});
@@ -702,6 +810,9 @@ function nodeMarkup(d,p,sel,vmap){
   }
   var lt=linkText(d);
   if(lt)tip.push(tr("f.link")+": "+lt);
+  var dmsg=dupMsgs(dw);
+  dmsg.forEach(function(m){tip.push("! "+m)});
+  var wbadge=dmsg.length?'<g><circle cx="'+(W-4)+'" cy="4" r="9" style="fill:var(--warn);stroke:var(--node);stroke-width:2"/><text x="'+(W-4)+'" y="8" text-anchor="middle" style="font:700 12px var(--sans);fill:var(--node)">!</text></g>':"";
   var hasW=d.type==="ap"&&d.ssidList.length>0;
   if(hasW)tip.push(tr("f.ssids")+": "+d.ssidList.map(function(z){return (z.name||"?")+(z.vlan?" (VLAN "+z.vlan+")":"")}).join(", "));
   var vline=d.vlan?'<circle cx="59" cy="73" r="4" style="fill:'+(v?v.color:"var(--muted)")+'"/>'+
@@ -709,7 +820,7 @@ function nodeMarkup(d,p,sel,vmap){
   var wl=hasW?'<g transform="translate('+(W-36)+' 66)" style="fill:none;stroke:var(--ap);stroke-width:1.4;stroke-linecap:round">'+
     '<circle cx="5" cy="9.5" r=".9" style="fill:var(--ap)"/><path d="M2.6 6.6a3.4 3.4 0 0 1 4.8 0M.6 4.2a6.3 6.3 0 0 1 8.8 0"/></g>'+
     '<text x="'+(W-12)+'" y="77" text-anchor="end" style="font:500 10.5px var(--sans);fill:var(--muted)">'+d.ssidList.length+'</text>':"";
-  return '<g class="node" data-id="'+d.id+'" tabindex="0" role="button" aria-label="'+esc((d.name||tr("unnamed"))+", "+T.label)+'" transform="translate('+p.x+' '+p.y+')" style="cursor:grab">'+
+  return '<g class="node" data-id="'+d.id+'" tabindex="0" role="button"'+(ex===undefined?"":' aria-expanded="'+ex+'"')+' aria-label="'+esc((d.name||tr("unnamed"))+", "+T.label)+'" transform="translate('+p.x+' '+p.y+')" style="cursor:grab">'+
     '<title>'+esc(tip.join("\n"))+'</title>'+
     '<clipPath id="cp-'+d.id+'"><rect width="'+W+'" height="'+H+'" rx="9"/></clipPath>'+
     '<rect width="'+W+'" height="'+H+'" rx="9" style="fill:var(--node);stroke:'+(sel?"var(--ink)":"var(--line)")+';stroke-width:'+(sel?2.5:1.25)+'"/>'+
@@ -718,11 +829,11 @@ function nodeMarkup(d,p,sel,vmap){
     '<text x="54" y="27" style="font:600 13px var(--sans);fill:var(--ink)">'+esc(trunc(d.name||tr("unnamed"),15))+'</text>'+
     '<text x="54" y="44" style="font:400 11px var(--sans);fill:var(--muted)">'+esc(trunc(d.model||T.label,20))+'</text>'+
     '<text x="54" y="60" style="font:400 11px var(--mono);fill:var(--muted)">'+esc(trunc(d.ip,17))+'</text>'+
-    vline+wl+
+    vline+wl+wbadge+
   '</g>';
 }
 
-function diagramMarkup(n,L,selId,bgVar){
+function diagramMarkup(n,L,selId,bgVar,exportMode){
   bgVar=bgVar||"--bg";
   var edges="",pills="",nodes="";
   var vmap={};n.vlans.forEach(function(v){vmap[v.id]=v});
@@ -733,6 +844,7 @@ function diagramMarkup(n,L,selId,bgVar){
     (n.isp?'<text x="'+(W/2)+'" y="41" text-anchor="middle" style="font:400 11px var(--sans);fill:var(--muted)">'+esc(trunc(n.isp,26))+'</text>':"")+
   '</g>';
   n.devices.forEach(function(d){
+    if(L.hidden[d.id])return;
     var pid=L.parent[d.id],c=L.pos[d.id],p=L.pos[pid],ph=pid===ROOT?IH:H;
     var x1=p.x+W/2,y1=p.y+ph,x2=c.x+W/2,y2=c.y,ym=y1+(y2-y1)/2;
     var lv=d.vlan&&vmap[d.vlan],lc=lv?lv.color:"var(--link)",pd="M"+x1+" "+y1+" V"+ym+" H"+x2+" V"+y2;
@@ -750,12 +862,21 @@ function diagramMarkup(n,L,selId,bgVar){
     else label=d.parentPort||d.uplinkPort||"";
     if(label)pills+=pill(x2,y2-17,trunc(label,26));
   });
-  n.devices.forEach(function(d){nodes+=nodeMarkup(d,L.pos[d.id],d.id===selId,vmap)});
+  var dm=dupMap(n);
+  var togs="";
+  n.devices.forEach(function(d){
+    if(L.hidden[d.id])return;
+    var has=L.childCount[d.id]>0,coll=!!L.collapsedSet[d.id];
+    nodes+=nodeMarkup(d,L.pos[d.id],d.id===selId,vmap,dm[d.id],has?!coll:undefined);
+    if(!has||(exportMode&&!coll))return;
+    var warn=coll&&L.descIds(d.id).some(function(i){return dm[i]});
+    togs+='<g transform="translate('+L.pos[d.id].x+' '+L.pos[d.id].y+')">'+togMarkup(d.id,{collapsed:coll,count:L.descCount[d.id],warn:warn})+'</g>';
+  });
   var hint="";
   if(!n.devices.length){
     hint='<text x="'+(ip.x+W/2)+'" y="'+(IH+58)+'" text-anchor="middle" style="font:400 13px var(--sans);fill:var(--muted)">'+esc(tr("dia.hint"))+'</text>';
   }
-  return edges+pills+nodes+hint;
+  return edges+pills+nodes+togs+hint;
 }
 
 var svg=$("#dia"),gEl=$("#g"),canvas=$("#canvas"),editEl=$("#edit");
@@ -768,7 +889,7 @@ function renderDiagram(refocus){
   svg.setAttribute("height",Math.round(b.h*zoom));
   gEl.innerHTML=diagramMarkup(n,L,selectedId);
   $("#zoomLbl").textContent=Math.round(zoom*100)+"%";
-  renderLegend();
+  renderLegend();renderDupChip();
   if(refocus&&selectedId){var el=gEl.querySelector('[data-id="'+selectedId+'"]');if(el)el.focus()}
 }
 
@@ -777,6 +898,7 @@ function fit(){
   var b=lastLayout.bounds,cw=canvas.clientWidth,ch=canvas.clientHeight;
   if(!cw||!ch)return;
   zoom=Math.round(clamp(Math.min(cw/b.w,ch/b.h,1),.3,2)*100)/100;
+  autoFit=true;lastCw=cw;
   renderDiagram();
 }
 
@@ -797,15 +919,16 @@ function renderNets(){
   b.textContent=confirmNet?tr("net.deleteConfirm"):tr("net.delete");
 }
 function renderDevs(){
-  var devs=net().devices;
+  var devs=net().devices,dm=dupMap(net()),hid=layout(net()).hidden;
   $("#devs").innerHTML=devs.length?devs.map(function(d){
-    var T=TYPES[d.type]||TYPES.switch;
-    return '<button type="button" class="dev'+(d.id===selectedId?" on":"")+'" data-act="pick-dev" data-id="'+d.id+'" style="--c:var('+T.v+')"><span class="nm">'+esc(d.name||tr("unnamed"))+'</span><span class="ip">'+esc(d.ip||T.short)+'</span></button>';
+    var T=TYPES[d.type]||TYPES.other,w=dm[d.id]?dupMsgs(dm[d.id]).join("\n"):"";
+    return '<button type="button" class="dev'+(d.id===selectedId?" on":"")+(hid[d.id]?" dim":"")+'" data-act="pick-dev" data-id="'+d.id+'" style="--c:var('+T.v+')"><span class="nm">'+esc(d.name||tr("unnamed"))+'</span><span class="tail">'+(w?'<span class="wb" title="'+esc(w)+'">!</span>':"")+'<span class="ip">'+esc(d.ip||T.short)+'</span></span></button>';
   }).join(""):'<p class="muted">'+esc(tr("dev.none"))+'</p>';
 }
 
 function field(label,key,val,ph,mono){
-  return '<label class="f"><span>'+esc(label)+'</span><input data-k="'+key+'"'+(mono?' class="mono" dir="ltr"':' dir="auto"')+' value="'+esc(val)+'" placeholder="'+esc(ph||"")+'" autocomplete="off" spellcheck="false"></label>';
+  var extra=(key==="name"?'<small class="nh">'+esc(tr("name.enter"))+'</small>':"")+(WARNK.indexOf(key)>=0?'<small class="warn" data-warn="'+key+'" hidden></small>':"");
+  return '<label class="f"><span>'+esc(label)+'</span><input data-k="'+key+'"'+(mono?' class="mono" dir="ltr"':' dir="auto"')+' value="'+esc(val)+'" placeholder="'+esc(ph||"")+'" autocomplete="off" spellcheck="false">'+extra+'</label>';
 }
 function phOf(p){return !p?"":(p.charAt(0)==="="?p.slice(1):tr(p))}
 function optHtml(opts,val){
@@ -907,12 +1030,15 @@ function renderForm(){
   }).join("");
   var typeOpts=Object.keys(TYPES).map(function(k){return '<option value="'+k+'"'+(k===d.type?" selected":"")+'>'+esc(TYPES[k].label)+'</option>'}).join("");
   var tf=TYPE_FIELDS[d.type].map(function(f){return field(tr(f[1]),f[0],d[f[0]],phOf(f[2]),f[3])}).join("");
+  var L0=layout(net()),hasKids=L0.childCount[d.id]>0,isCol=!!L0.collapsedSet[d.id];
+  var colBtn=hasKids?'<button type="button" class="btn" data-act="tog-collapse">'+esc(tr(isCol?"tog.expandBelow":"tog.collapseBelow"))+'</button>':"";
   var unset=tr("opt.unset");
   var speedOpts=[["",unset]].concat(SPEEDS.map(function(x){return [x,x]}));
   var mediaOpts=[["",unset],["copper",tr("media.copper")],["fiber",tr("media.fiber")],["wireless",tr("media.wireless")]];
   var wifiOpts=[["",unset]].concat(WIFI.map(function(x){return [x,"Wi-Fi "+x]}));
   editEl.innerHTML=
     '<div class="dh" style="--c:var('+T.v+')"><i></i><div><h2 id="dhName">'+esc(d.name||tr("unnamed"))+'</h2><p id="dhType">'+esc(T.label)+'</p></div></div>'+
+    '<div class="acts"><button type="button" class="btn" data-act="dup" title="'+esc(tr("dup.tip"))+'">'+esc(tr("dup.btn"))+'</button><label class="dupn"><span aria-hidden="true">×</span><input id="dupN" type="number" min="1" max="50" value="'+dupQty+'" class="mono" dir="ltr" aria-label="'+esc(tr("dup.n"))+'"></label>'+colBtn+'</div>'+
     '<label class="f"><span>'+esc(tr("f.type"))+'</span><select data-k="type">'+typeOpts+'</select></label>'+
     field(tr("f.name"),"name",d.name,tr("ph.name"))+
     '<div class="g2">'+field(tr("f.model"),"model",d.model,tr("ph.model"))+field(tr("f.serial"),"serial",d.serial,"Q2XX-XXXX-XXXX",true)+'</div>'+
@@ -925,13 +1051,14 @@ function renderForm(){
     '<div class="g2">'+selField(tr("f.linkSpeed"),"linkSpeed",d.linkSpeed,speedOpts)+selField(tr("f.linkMedia"),"linkMedia",d.linkMedia,mediaOpts)+'</div>'+
     '<div class="g2"><label class="chk"><input type="checkbox" data-k="linkLag"'+(d.linkLag?" checked":"")+'><span>'+esc(tr("f.lag"))+'</span></label>'+
       '<label class="f"><span>'+esc(tr("f.lagCount"))+'</span><input data-k="lagCount" type="number" min="2" max="16" class="mono" dir="ltr" value="'+esc(d.lagCount)+'" placeholder="2"'+(d.linkLag?"":" disabled")+'></label></div>'+
-    (d.type==="ap"?'<h3>'+esc(tr("sec.wireless"))+'</h3><div class="g2">'+field(tr("f.radio"),"radio",d.radio,tr("ph.radio"))+selField(tr("f.wifi"),"wifi",d.wifi,wifiOpts)+'</div><div id="wlSec">'+wlHtml(d)+'</div>':"")+
-    (d.type==="switch"?'<h3>'+esc(tr("sec.ports"))+'</h3><div id="portSec">'+portSecInner(d)+'</div>':"")+
+    (d.type==="ap"?'<h3>'+esc(tr("sec.wireless"))+'</h3><div class="g2">'+field(tr("f.radio"),"radio",d.radio,tr("ph.radio"))+selField(tr("f.wifi"),"wifi",d.wifi,wifiOpts)+'</div>'+copyRow(d,"ssids")+'<div id="wlSec">'+wlHtml(d)+'</div>':"")+
+    (d.type==="switch"?'<h3>'+esc(tr("sec.ports"))+'</h3>'+copyRow(d,"ports")+'<div id="portSec">'+portSecInner(d)+'</div>':"")+
     '<h3>'+esc(tr("sec.notes"))+'</h3>'+
     '<label class="f"><textarea data-k="notes" dir="auto" aria-label="'+esc(tr("sec.notes"))+'" rows="4" placeholder="'+esc(tr("ph.notes"))+'">'+esc(d.notes)+'</textarea></label>'+
     '<h3>'+esc(tr("sec.remove"))+'</h3>'+
     '<button type="button" class="btn '+(confirmDev?"confirm":"danger")+'" data-act="del-dev">'+esc(confirmDev?tr("dev.deleteConfirm"):tr("dev.delete"))+'</button>'+
     '<p class="delnote">'+esc(tr("dev.deleteNote"))+'</p>';
+  updateWarns();
 }
 
 /* ---------- VLANs ---------- */
@@ -985,14 +1112,192 @@ function legendSvg(n,w){
   return {svg:out,h:n.vlans.length?y+22:0};
 }
 
+/* ---------- duplicates, cloning, copy ---------- */
+var WARNK=["name","ip","mac","serial"];
+var WARN_SVG='<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 2.5 20h19z"/><path d="M12 10v4M12 17.2h.01"/></svg>';
+function normVal(k,v){
+  v=String(v==null?"":v).trim();
+  if(!v)return "";
+  if(k==="mac")return v.toLowerCase().replace(/[^0-9a-f]/g,"");
+  if(k==="serial")return v.toUpperCase().replace(/\s+/g,"");
+  return v.toLowerCase();
+}
+function dupMap(n){
+  var res={};
+  WARNK.forEach(function(k){
+    var g={};
+    n.devices.forEach(function(d){var v=normVal(k,d[k]);if(v)(g[v]=g[v]||[]).push(d)});
+    Object.keys(g).forEach(function(v){
+      if(g[v].length>1)g[v].forEach(function(d){
+        var r=res[d.id]||(res[d.id]={});
+        r[k]=g[v].filter(function(x){return x!==d});
+      });
+    });
+  });
+  return res;
+}
+function listNames(list){
+  var ns=list.slice(0,3).map(function(x){return x.name||tr("unnamed")});
+  return ns.join(", ")+(list.length>3?" …":"");
+}
+function dupMsgs(entry){
+  if(!entry)return [];
+  return WARNK.filter(function(k){return entry[k]}).map(function(k){return tr("warn."+k,{names:listNames(entry[k])})});
+}
+function updateWarns(){
+  var d=selectedId&&dev(selectedId);
+  if(!d)return;
+  var e=dupMap(net())[d.id]||{};
+  editEl.querySelectorAll("[data-warn]").forEach(function(el){
+    var k=el.dataset.warn,list=e[k],inp=editEl.querySelector('[data-k="'+k+'"]');
+    if(list&&list.length){el.hidden=false;el.textContent=tr("warn."+k,{names:listNames(list)})}
+    else{el.hidden=true;el.textContent=""}
+    if(inp){if(list&&list.length)inp.setAttribute("aria-invalid","true");else inp.removeAttribute("aria-invalid")}
+  });
+}
+function renderDupChip(){
+  var el=$("#dupChip");if(!el)return;
+  var n=net(),dm=dupMap(n),cnt=n.devices.filter(function(d){return dm[d.id]}).length;
+  if(!cnt){el.hidden=true;return}
+  var tip=tr("warn.chipTip",{n:cnt});
+  el.hidden=false;el.innerHTML=WARN_SVG+"<span>"+cnt+"</span>";
+  el.title=tip;el.setAttribute("aria-label",tip);
+}
+function usedIps(){var u={};net().devices.forEach(function(d){var v=String(d.ip||"").trim();if(v)u[v]=1});return u}
+function nextFreeIp(ip,used){
+  var m=/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/.exec(String(ip||"").trim());
+  if(!m)return "";
+  var base=m[1]+"."+m[2]+"."+m[3]+".";
+  for(var i=+m[4]+1;i<=254;i++){if(!used[base+i])return base+i}
+  return "";
+}
+function takenNames(){var t={};net().devices.forEach(function(d){t[String(d.name||"").trim().toLowerCase()]=1});return t}
+function nextName(src){
+  var taken=takenNames(),m=/^(.*?)(\d+)$/.exec(String(src||"").trim()),pre,num,pad;
+  if(m){pre=m[1];num=+m[2];pad=m[2].length}
+  else{pre=(String(src||"").trim()||"DEV")+"-";num=1;pad=2}
+  for(var i=num+1;i<num+10000;i++){var c=pre+String(i).padStart(pad,"0");if(!taken[c.toLowerCase()])return c}
+  return pre+Date.now();
+}
+function cloneDevice(src,o){
+  var c=JSON.parse(JSON.stringify(src));
+  c.id=uid();
+  c.name=nextName(src.name);
+  c.serial="";c.mac="";c.notes="";
+  c.ip=nextFreeIp(src.ip,usedIps());
+  if(!o.ports)c.portMap={};
+  if(Number.isFinite(src.x)&&Number.isFinite(src.y)){c.x=src.x+W+GX;c.y=src.y}
+  return c;
+}
+function duplicate(src,count){
+  count=clamp(parseInt(count,10)||1,1,50);
+  mark(null);
+  var n=net(),made=[],cur=src;
+  for(var i=0;i<count;i++){
+    var c=cloneDevice(cur,{ports:true});
+    n.devices.push(c);made.push(c);cur=c;
+  }
+  persist();
+  select(made[0].id,{scroll:true,openEdit:true,focusName:true});
+  renderNets();
+  setStatus(tr("st.duplicated",{name:src.name||tr("unnamed"),n:made.length}));
+}
+function addLike(src){
+  mark(null);
+  var c=cloneDevice(src,{ports:false});
+  net().devices.push(c);
+  persist();
+  select(c.id,{scroll:true,openEdit:true,focusName:true,force:true});
+  renderNets();
+}
+function copyRow(d,what){
+  var others=net().devices.filter(function(x){return x.type===d.type&&x.id!==d.id});
+  if(!others.length)return "";
+  var k=what==="ports"?"ports":"ssids";
+  return '<div class="copyrow"><select data-copy="'+what+'" aria-label="'+esc(tr("copy."+k+"Aria"))+'"><option value="">'+esc(tr("copy."+k+"Ph"))+'</option>'+
+    others.map(function(x){return '<option value="'+x.id+'">'+esc(x.name||tr("unnamed"))+'</option>'}).join("")+
+    '</select><button type="button" class="btn" data-act="copy-from" data-what="'+what+'">'+esc(tr("copy.btn"))+'</button></div>';
+}
+
+/* ---------- panels, add menu ---------- */
+var PKEY="network-mapper:panels";
+var panels=(function(){
+  try{var o=JSON.parse(localStorage.getItem(PKEY));if(o&&typeof o==="object")return {side:o.side!==false,edit:o.edit!==false}}catch(e){}
+  return {side:true,edit:true};
+})();
+var autoFit=true,lastCw=0,addQty=1,dupQty=1;
+function applyPanels(){
+  var app=$(".app");
+  app.classList.toggle("hide-side",!panels.side);
+  app.classList.toggle("hide-edit",!panels.edit);
+  var both=!panels.side&&!panels.edit;
+  function set(id,pressed,key){var b=$(id);b.setAttribute("aria-pressed",String(pressed));b.title=tr(key);b.setAttribute("aria-label",tr(key))}
+  set("#togSide",panels.side,panels.side?"panel.side.hide":"panel.side.show");
+  set("#togEdit",panels.edit,panels.edit?"panel.edit.hide":"panel.edit.show");
+  set("#togFocus",both,both?"panel.focus.show":"panel.focus.hide");
+  try{localStorage.setItem(PKEY,JSON.stringify(panels))}catch(e){}
+}
+function setPanels(side,edit){
+  panels.side=side;panels.edit=edit;applyPanels();
+  setTimeout(function(){if(autoFit)fit()},230);
+}
+function setPanel(which,open){
+  setPanels(which==="side"?open:panels.side,which==="edit"?open:panels.edit);
+}
+function setAddMenu(open){
+  var p=$("#addPop");if(!p)return;
+  p.hidden=!open;$("#addBtn").setAttribute("aria-expanded",String(open));
+}
+function syncQty(from){["#qty","#qty2"].forEach(function(q){var el=$(q);if(el!==from)el.value=addQty})}
+
 /* ---------- state changes ---------- */
-function touch(){persist();renderDiagram();renderDevs();renderNets()}
+function touch(){persist();renderDiagram();renderDevs();renderNets();updateWarns()}
 
 function select(id,opts){
+  opts=opts||{};
   if(selectedId!==id)selPort=null;
   selectedId=id;confirmDev=false;
-  renderDevs();renderForm();renderDiagram(opts&&opts.refocus);
-  if(id&&opts&&opts.scroll&&isMobile())editEl.scrollIntoView({behavior:"smooth",block:"start"});
+  if(id&&opts.openEdit&&!panels.edit)setPanel("edit",true);
+  if(id&&revealDevice(id)){persist();if(autoFit)requestAnimationFrame(fit)}
+  renderDevs();renderForm();renderDiagram(opts.refocus);
+  if(id&&opts.scroll&&isMobile())editEl.scrollIntoView({behavior:"smooth",block:"start"});
+  if(id&&opts.focusName){
+    var inp=editEl.querySelector('[data-k="name"]');
+    if(inp&&(opts.force||!isMobile())){inp.focus();inp.select()}
+  }
+}
+
+/* ---------- collapse / expand branches (view state) ---------- */
+function revealDevice(id){
+  var n=net(),L=layout(n);
+  if(!L.hidden[id])return false;
+  var c=n.collapsed||[],p=L.parent[id];
+  while(p&&p!==ROOT){var i=c.indexOf(p);if(i>=0)c.splice(i,1);p=L.parent[p]}
+  return true;
+}
+function ensureSelectionVisible(){
+  if(!selectedId)return;
+  var L=layout(net());
+  if(!L.hidden[selectedId])return;
+  var id=selectedId;
+  while(L.hidden[id]&&L.parent[id]&&L.parent[id]!==ROOT)id=L.parent[id];
+  select(id);
+}
+function afterCollapse(focusId){
+  persist();
+  ensureSelectionVisible();
+  renderDevs();
+  if(selectedId)renderForm();
+  renderDiagram();
+  if(autoFit)fit();
+  if(focusId){var el=gEl.querySelector('[data-id="'+focusId+'"]');if(el)el.focus()}
+}
+function toggleCollapse(id,force,refocus){
+  var n=net(),c=n.collapsed||(n.collapsed=[]),isC=c.indexOf(id)>=0;
+  var want=force==null?!isC:force;
+  if(want===isC)return;
+  if(want)c.push(id);else c.splice(c.indexOf(id),1);
+  afterCollapse(refocus?id:null);
 }
 
 function switchNet(id){
@@ -1001,24 +1306,31 @@ function switchNet(id){
   requestAnimationFrame(fit);
 }
 
-function addDevice(type){
+function nextDefaultName(prefix){
+  var taken=takenNames();
+  for(var i=1;i<10000;i++){var c=prefix+"-"+String(i).padStart(2,"0");if(!taken[c.toLowerCase()])return c}
+  return prefix+"-"+Date.now();
+}
+function defaultParent(type){
+  var n=net();
+  if(type==="mx")return "";
+  var sel=selectedId&&dev(selectedId),ep=!!ENDPOINTS[type];
+  var mx=n.devices.find(function(d){return d.type==="mx"}),sw=n.devices.find(function(d){return d.type==="switch"});
+  if(sel&&(sel.type==="mx"||sel.type==="switch"||(ep&&sel.type==="ap")))return sel.id;
+  return type==="switch"?((mx||sw||{}).id||""):((sw||mx||{}).id||"");
+}
+function addDevice(type,qty){
+  qty=clamp(parseInt(qty,10)||1,1,50);
   mark(null);
-  var n=net(),count=n.devices.filter(function(d){return d.type===type}).length+1;
-  var name=TYPES[type].prefix+"-"+String(count).padStart(2,"0");
-  var up="";
-  if(type!=="mx"){
-    var sel=selectedId&&dev(selectedId),ep=!!ENDPOINTS[type];
-    var mx=n.devices.find(function(d){return d.type==="mx"}),sw=n.devices.find(function(d){return d.type==="switch"});
-    if(sel&&(sel.type==="mx"||sel.type==="switch"||(ep&&sel.type==="ap")))up=sel.id;
-    else up=type==="switch"?((mx||sw||{}).id||""):((sw||mx||{}).id||"");
+  var n=net(),up=defaultParent(type),made=[];
+  for(var i=0;i<qty;i++){
+    var d=blank(type,{name:nextDefaultName(TYPES[type].prefix),uplinkId:up,ports:type==="switch"?"24":""});
+    n.devices.push(d);made.push(d);
   }
-  var d=blank(type,{name:name,uplinkId:up,ports:type==="switch"?"24":""});
-  n.devices.push(d);
   persist();
-  select(d.id,{scroll:true});
+  select(made[0].id,{scroll:true,openEdit:true,focusName:true});
   renderNets();
-  var inp=editEl.querySelector('[data-k="name"]');
-  if(inp&&!isMobile()){inp.focus();inp.select()}
+  if(qty>1)setStatus(tr("st.added",{n:qty}));
 }
 
 /* ---------- file save / open / export ---------- */
@@ -1062,7 +1374,7 @@ async function deliver(filename,data,okMsg){
 }
 function saveFile(){
   var n=net();
-  var data=JSON.stringify({format:"network-map",version:3,name:n.name,isp:n.isp||"",vlans:n.vlans,devices:n.devices},null,2);
+  var data=JSON.stringify({format:"network-map",version:3,name:n.name,isp:n.isp||"",vlans:n.vlans,devices:n.devices,collapsed:n.collapsed||[]},null,2);
   deliver(slug(n.name)+".network.json",data,tr("st.fileSaved"));
 }
 function svgInfo(){
@@ -1072,7 +1384,7 @@ function svgInfo(){
   var str='<svg xmlns="http://www.w3.org/2000/svg" viewBox="'+b.x+' '+y0+' '+b.w+' '+h+'" width="'+b.w+'" height="'+h+'">'+
     '<rect x="'+b.x+'" y="'+y0+'" width="'+b.w+'" height="'+h+'" style="fill:var(--panel)"/>'+
     (lg.h?'<g transform="translate('+(b.x+16)+' '+(y0+8)+')">'+lg.svg+'</g>':"")+
-    diagramMarkup(n,L,null,"--panel")+'</svg>';
+    diagramMarkup(n,L,null,"--panel",true)+'</svg>';
   str=str.replace(/var\((--[\w-]+)\)/g,function(m,k){var v=cs.getPropertyValue(k).trim();return v?v.replace(/"/g,"'"):m});
   return {svg:str,w:b.w,h:h};
 }
@@ -1112,13 +1424,48 @@ function importText(text){
 var actions={
   "pick-net":function(t){switchNet(t.dataset.id)},
   "pick-dev":function(t){select(t.dataset.id,{scroll:true})},
-  "add":function(t){addDevice(t.dataset.type)},
+  "add":function(t){addDevice(t.dataset.type,addQty);setAddMenu(false)},
+  "add-menu":function(){setAddMenu($("#addPop").hidden)},
+  "tog-side":function(){setPanel("side",!panels.side)},
+  "tog-edit":function(){setPanel("edit",!panels.edit)},
+  "tog-focus":function(){var any=panels.side||panels.edit;setPanels(!any,!any)},
+  "collapse-all":function(){
+    var n=net(),L=layout(n);
+    n.collapsed=n.devices.filter(function(d){return L.childCount[d.id]>0}).map(function(d){return d.id});
+    afterCollapse();
+  },
+  "expand-all":function(){net().collapsed=[];afterCollapse()},
+  "tog-collapse":function(){var d=selectedId&&dev(selectedId);if(d)toggleCollapse(d.id)},
+  "dup":function(){var d=selectedId&&dev(selectedId);if(d)duplicate(d,dupQty)},
+  "goto-dup":function(){
+    var n=net(),dm=dupMap(n),fl=n.devices.filter(function(d){return dm[d.id]});
+    if(!fl.length)return;
+    var i=fl.findIndex(function(d){return d.id===selectedId});
+    select(fl[(i+1)%fl.length].id,{openEdit:true,scroll:true});
+  },
+  "copy-from":function(t){
+    var d=selectedId&&dev(selectedId),sel=editEl.querySelector('[data-copy="'+t.dataset.what+'"]');
+    if(!d||!sel)return;
+    var src=sel.value&&dev(sel.value);
+    if(!src){setStatus(tr("copy.choose"));return}
+    mark(null);
+    if(t.dataset.what==="ports"){
+      d.portMap=JSON.parse(JSON.stringify(src.portMap||{}));
+      if(!portCount(d)&&src.ports)d.ports=src.ports;
+      persist();renderForm();
+      setStatus(tr("st.copiedPorts",{name:src.name||tr("unnamed")}));
+    }else{
+      d.ssidList=JSON.parse(JSON.stringify(src.ssidList||[]));
+      persist();renderWl();renderDiagram();
+      setStatus(tr("st.copiedSsids",{name:src.name||tr("unnamed")}));
+    }
+  },
   "import":function(){$("#file").click()},
   "save-file":saveFile,
   "export-svg":exportSvg,
   "auto":function(){mark(null);net().devices.forEach(function(d){delete d.x;delete d.y});persist();renderDiagram();fit()},
-  "zoom-in":function(){zoom=Math.round(clamp(zoom+.1,.3,2)*100)/100;renderDiagram()},
-  "zoom-out":function(){zoom=Math.round(clamp(zoom-.1,.3,2)*100)/100;renderDiagram()},
+  "zoom-in":function(){autoFit=false;zoom=Math.round(clamp(zoom+.1,.3,2)*100)/100;renderDiagram()},
+  "zoom-out":function(){autoFit=false;zoom=Math.round(clamp(zoom-.1,.3,2)*100)/100;renderDiagram()},
   "fit":fit,
   "undo":undo,
   "redo":redo,
@@ -1143,7 +1490,7 @@ var actions={
     mark(null);
     var id=store.activeId,name=net().name;
     store.networks=store.networks.filter(function(n){return n.id!==id});
-    if(!store.networks.length)store.networks.push({id:uid(),name:tr("net.new"),isp:"",vlans:[],devices:[]});
+    if(!store.networks.length)store.networks.push({id:uid(),name:tr("net.new"),isp:"",vlans:[],devices:[],collapsed:[]});
     switchNet(store.networks[0].id);
     setStatus(tr("st.deletedNet",{name:name}));
   },
@@ -1172,9 +1519,10 @@ var actions={
   }
 };
 document.addEventListener("click",function(e){
+  if(!e.target.closest(".addmenu"))setAddMenu(false);
   var t=e.target.closest("[data-act]");
   if(t&&actions[t.dataset.act])actions[t.dataset.act](t);
-  if(e.target.closest(".node")&&isMobile())editEl.scrollIntoView({behavior:"smooth",block:"start"});
+  if(e.target.closest(".node")&&!e.target.closest(".tog")&&isMobile())editEl.scrollIntoView({behavior:"smooth",block:"start"});
 });
 
 $("#newForm").addEventListener("submit",function(e){
@@ -1183,7 +1531,7 @@ $("#newForm").addEventListener("submit",function(e){
   if(!name){inp.focus();return}
   var base=name,i=2;
   while(store.networks.some(function(n){return n.name===name}))name=base+" "+(i++);
-  var n={id:uid(),name:name,isp:"",vlans:[],devices:[]};
+  var n={id:uid(),name:name,isp:"",vlans:[],devices:[],collapsed:[]};
   mark(null);
   store.networks.push(n);inp.value="";
   switchNet(n.id);
@@ -1206,6 +1554,7 @@ $("#file").addEventListener("change",function(e){
 
 editEl.addEventListener("input",function(e){
   var t=e.target,k=t.dataset.k,d=selectedId&&dev(selectedId);
+  if(t.id==="dupN"){var nv=parseInt(t.value,10);if(nv>=1&&nv<=50)dupQty=nv;return}
   if(!d)return;
   if(k){
     if(k==="type"||k==="uplinkId")return;
@@ -1236,7 +1585,16 @@ editEl.addEventListener("input",function(e){
     if(pk==="mode")renderPortSec(true);
   }
 });
+editEl.addEventListener("keydown",function(e){
+  var t=e.target;
+  if(e.key!=="Enter"||e.isComposing||!t.matches||!t.matches('[data-k="name"]'))return;
+  var d=selectedId&&dev(selectedId);
+  if(!d)return;
+  e.preventDefault();
+  addLike(d);
+});
 editEl.addEventListener("change",function(e){
+  if(e.target.id==="dupN"){e.target.value=dupQty;return}
   var k=e.target.dataset.k,d=selectedId&&dev(selectedId);
   if(!k||!d)return;
   if(k==="type"){mark(null);d.type=e.target.value;touch();renderForm()}
@@ -1268,6 +1626,7 @@ $("#vlans").addEventListener("input",function(e){
 
 /* drag nodes (mouse and pen); touch taps select */
 svg.addEventListener("pointerdown",function(e){
+  if(e.target.closest(".tog"))return;
   var g=e.target.closest(".node");
   if(!g){if(selectedId)select(null);return}
   if(e.pointerType==="mouse"&&e.button!==0)return;
@@ -1300,11 +1659,39 @@ function endDrag(e){
 }
 svg.addEventListener("pointerup",endDrag);
 svg.addEventListener("pointercancel",endDrag);
+svg.addEventListener("click",function(e){
+  var tg=e.target.closest(".tog");
+  if(tg)toggleCollapse(tg.dataset.tog);
+});
+svg.addEventListener("dblclick",function(e){
+  if(e.target.closest(".tog"))return;
+  var g=e.target.closest(".node");
+  if(g)select(g.dataset.id,{openEdit:true});
+});
 svg.addEventListener("keydown",function(e){
   var g=e.target.closest&&e.target.closest(".node");
-  if(g&&(e.key==="Enter"||e.key===" ")){e.preventDefault();select(g.dataset.id,{refocus:true})}
+  if(g&&(e.key==="Enter"||e.key===" ")){e.preventDefault();select(g.dataset.id,{refocus:true,openEdit:true})}
+  if(g&&(e.key==="ArrowLeft"||e.key==="ArrowRight")){
+    var gid=g.dataset.id,rtl=document.documentElement.dir==="rtl";
+    if(lastLayout.childCount[gid]){e.preventDefault();toggleCollapse(gid,(e.key==="ArrowLeft")!==rtl,true)}
+  }
 });
 
+["#qty","#qty2"].forEach(function(q){
+  $(q).addEventListener("input",function(e){
+    var v=parseInt(e.target.value,10);
+    if(v>=1&&v<=50){addQty=v;syncQty(e.target)}
+  });
+  $(q).addEventListener("change",function(e){e.target.value=addQty;syncQty(e.target)});
+});
+document.addEventListener("keydown",function(e){
+  var el=e.target,tag=el&&el.tagName,typing=tag==="INPUT"||tag==="TEXTAREA"||tag==="SELECT"||(el&&el.isContentEditable);
+  if(e.key==="Escape")setAddMenu(false);
+  if(!typing&&!e.ctrlKey&&!e.metaKey&&!e.altKey){
+    if(e.key==="[")setPanel("side",!panels.side);
+    else if(e.key==="]")setPanel("edit",!panels.edit);
+  }
+});
 document.addEventListener("keydown",function(e){
   if(!(e.ctrlKey||e.metaKey)||e.altKey)return;
   var el=e.target,tag=el&&el.tagName,k=String(e.key).toLowerCase();
@@ -1330,7 +1717,8 @@ function applyStatic(){
   document.querySelectorAll("[data-i18n-ph]").forEach(function(el){el.placeholder=tr(el.dataset.i18nPh)});
   document.querySelectorAll("[data-i18n-aria]").forEach(function(el){el.setAttribute("aria-label",tr(el.dataset.i18nAria))});
   document.querySelectorAll("[data-i18n-title]").forEach(function(el){el.title=tr(el.dataset.i18nTitle)});
-  document.querySelectorAll('[data-act="add"]').forEach(function(b){b.innerHTML="<i></i>"+esc(TYPES[b.dataset.type].short)});
+  document.querySelectorAll('[data-act="add"]').forEach(function(b){b.innerHTML="<i></i>"+esc(b.classList.contains("pop-item")?TYPES[b.dataset.type].label:TYPES[b.dataset.type].short)});
+  applyPanels();
   $("#fbMsg").innerHTML=tr("fb.text",{name:'<code id="fbName"></code>'});
   $("#lang").value=lang;
 }
@@ -1345,6 +1733,11 @@ function renderAll(){renderBar();renderNets();renderDevs();renderVlans();renderF
 applyStatic();
 renderAll();
 requestAnimationFrame(fit);
+var rzT=0;
+window.addEventListener("resize",function(){
+  clearTimeout(rzT);
+  rzT=setTimeout(function(){var cw=canvas.clientWidth;if(autoFit&&cw&&cw!==lastCw)fit()},150);
+});
 setStatus(tr("st.default"));
 })();
 </script>
